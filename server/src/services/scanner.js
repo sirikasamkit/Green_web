@@ -118,7 +118,7 @@ async function scanWebsite(targetUrl, device = 'desktop') {
   let totalBytes = 0;
 
   try {
-    browser = await puppeteer.launch({
+    const launchPromise = puppeteer.launch({
       headless: 'new',
       ignoreHTTPSErrors: true,
       args: [
@@ -133,12 +133,22 @@ async function scanWebsite(targetUrl, device = 'desktop') {
         '--disable-background-networking',
         '--disable-default-apps',
         '--disable-sync',
-        '--metrics-recording-only'
+        '--disable-software-rasterizer',
+        '--disable-breakpad',
+        '--no-default-browser-check',
+        '--js-flags="--max-old-space-size=256"'
       ]
     });
 
+    // 6s timeout on browser launch so cloud memory limits never hang
+    const timeoutPromise = new Promise((_, reject) =>
+      setTimeout(() => reject(new Error('Browser launch threshold reached')), 6000)
+    );
+
+    browser = await Promise.race([launchPromise, timeoutPromise]);
+
     const page = await browser.newPage();
-    await page.setDefaultNavigationTimeout(14000); // 14 seconds max for navigation
+    await page.setDefaultNavigationTimeout(14000);
 
     // Configure Viewport
     if (device === 'mobile') {
@@ -200,17 +210,16 @@ async function scanWebsite(targetUrl, device = 'desktop') {
 
     const navStart = Date.now();
     
-    // Use fast 'domcontentloaded' with 14s timeout
+    // Fast domcontentloaded with short grace period
     let response = null;
     try {
       response = await page.goto(normalizedUrl, {
         waitUntil: 'domcontentloaded',
         timeout: 14000
       });
-      // Short 1.5s grace period for initial asset streaming
       await new Promise(r => setTimeout(r, 1500));
     } catch (navErr) {
-      console.warn(`⚡ Navigation threshold reached for ${normalizedUrl}: ${navErr.message} (using loaded assets)`);
+      console.warn(`⚡ Navigation threshold reached for ${normalizedUrl}: ${navErr.message}`);
     }
 
     loadTimeMs = Date.now() - navStart;
@@ -231,7 +240,7 @@ async function scanWebsite(targetUrl, device = 'desktop') {
 
     domElements = await page.evaluate(() => document.querySelectorAll('*').length).catch(() => 0);
 
-    // Capture screenshot with short timeout
+    // Capture screenshot
     try {
       const timestamp = Date.now();
       const safeDomain = domain.replace(/[^a-z0-9]/gi, '_');
@@ -250,14 +259,14 @@ async function scanWebsite(targetUrl, device = 'desktop') {
     }
 
   } catch (error) {
-    console.warn(`⚠️ Scanner note for ${normalizedUrl}: ${error.message} - Using fast HTTP stream.`);
+    console.warn(`⚠️ Fast HTTP Fallback activated for ${normalizedUrl}: ${error.message}`);
 
-    // Perform resilient Axios fallback
+    // Fast Axios HTTP Stream fallback
     if (totalBytes === 0) {
       try {
         const fbStart = Date.now();
         const fbRes = await axios.get(normalizedUrl, {
-          timeout: 8000,
+          timeout: 7000,
           headers: {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) GreenWebAnalyzer/1.0',
             'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'

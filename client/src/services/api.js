@@ -7,7 +7,7 @@ const apiClient = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
-  timeout: 90000, // Generous upper-bound for heavy website scans
+  timeout: 120000, // 2 minutes to comfortably accommodate Render free tier cold-starts
 });
 
 export const scanApi = {
