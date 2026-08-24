@@ -127,13 +127,16 @@ export default function ScanResult() {
   }
 
   // Dynamic calculations based on monthly traffic slider
-  const annualVisits = monthlyTraffic * 12;
-  const annualGrams = scan.carbon_grams * annualVisits;
+  const safeGrams = Number(scan.carbon_grams) || 0;
+  const annualVisits = (Number(monthlyTraffic) || 10000) * 12;
+  const annualGrams = safeGrams * annualVisits;
   const dynamicEquivalencies = {
     annual_kg_co2: Number((annualGrams / 1000).toFixed(2)),
     trees_needed: Number((annualGrams / 21770).toFixed(2)),
     car_km_driven: Number((annualGrams / 120).toFixed(1)),
     tea_cups_boiled: Math.round(annualGrams / 7),
+    smartphone_charges: Math.round(annualGrams / 8.3),
+    kwh_electricity: Number((annualGrams / 442).toFixed(2)),
   };
 
   const recommendations = scan.recommendations || [];
