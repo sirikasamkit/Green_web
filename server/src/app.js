@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const morgan = require('morgan');
 const path = require('path');
+const fs = require('fs');
 require('dotenv').config();
 
 const apiRoutes = require('./routes/apiRoutes');
@@ -10,7 +11,7 @@ const { db } = require('./models/db');
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Enable ETag for 304 cache validation
+// Enable ETag for cache validation
 app.set('etag', 'strong');
 
 // Middleware
@@ -23,6 +24,12 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 app.use(morgan('dev'));
 
+// Auto-unregister any stale service workers from previous projects on port 5000
+app.get('/service-worker.js', (req, res) => {
+  res.setHeader('Content-Type', 'application/javascript');
+  res.send('self.addEventListener("install", () => self.skipWaiting()); self.addEventListener("activate", () => self.clients.claim()); self.registration.unregister();');
+});
+
 // Static files for screenshots with 1-year immutable caching
 app.use(
   '/screenshots',
@@ -33,27 +40,46 @@ app.use(
   })
 );
 
-// API Routes
+// REST API Routes
 app.use('/api', apiRoutes);
 
-// Root route
-app.get('/', (req, res) => {
-  res.setHeader('Cache-Control', 'public, max-age=3600');
-  res.json({
-    message: '🌿 Green Web Analyzer API is running',
-    version: '1.0.0',
-    endpoints: {
-      scan: 'POST /api/scan',
-      getScan: 'GET /api/scans/:id',
-      history: 'GET /api/scans',
-      compare: 'POST /api/compare',
-      stats: 'GET /api/stats',
-      health: 'GET /api/health'
-    }
-  });
-});
+// Frontend Client Static Files (Single-Port Full-Stack Hosting)
+const clientDistPath = path.resolve(__dirname, '../../client/dist');
 
-// 404 Handler
+if (fs.existsSync(clientDistPath)) {
+  // Serve static assets from built React frontend
+  app.use(express.static(clientDistPath, {
+    maxAge: '1h',
+    etag: true
+  }));
+
+  // SPA fallback: return index.html for all non-API GET requests
+  app.get('*', (req, res, next) => {
+    if (req.path.startsWith('/api') || req.path.startsWith('/screenshots')) {
+      return next();
+    }
+    res.sendFile(path.join(clientDistPath, 'index.html'));
+  });
+} else {
+  // Fallback if client hasn't been built yet
+  app.get('/', (req, res) => {
+    res.json({
+      message: '🌿 Green Web Analyzer API is running',
+      version: '1.0.0',
+      hint: 'Run "npm run build" in the /client directory to serve the full UI at this port.',
+      endpoints: {
+        scan: 'POST /api/scan',
+        getScan: 'GET /api/scans/:id',
+        history: 'GET /api/scans',
+        compare: 'POST /api/compare',
+        stats: 'GET /api/stats',
+        health: 'GET /api/health'
+      }
+    });
+  });
+}
+
+// 404 Handler for unhandled API routes
 app.use((req, res) => {
   res.status(404).json({ error: 'Endpoint not found.' });
 });
@@ -66,8 +92,8 @@ app.use((err, req, res, next) => {
 
 // Start Server
 app.listen(PORT, () => {
-  console.log(`🚀 Green Web Analyzer Server running at http://localhost:${PORT}`);
-  console.log(`🌿 Carbon Engine & Puppeteer ready for scans.`);
+  console.log(`🚀 Green Web Analyzer Full-Stack App running at http://localhost:${PORT}`);
+  console.log(`🌿 Carbon Engine & Frontend UI ready on port ${PORT}`);
 });
 
 module.exports = app;

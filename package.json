@@ -1,0 +1,11 @@
+{
+  "name": "green-web-analyzer",
+  "version": "1.0.0",
+  "description": "Unified Full-Stack Green Web Carbon Analyzer",
+  "scripts": {
+    "build": "npm run build --prefix client",
+    "start": "node server/src/app.js",
+    "dev": "npm run dev --prefix client",
+    "server": "node server/src/app.js"
+  }
+}
