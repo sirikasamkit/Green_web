@@ -1,0 +1,23 @@
+{
+  "name": "green-web-analyzer-server",
+  "version": "1.0.0",
+  "description": "Backend API for Green Web Carbon & Sustainability Analyzer",
+  "main": "src/app.js",
+  "scripts": {
+    "start": "node src/app.js",
+    "dev": "node --watch src/app.js"
+  },
+  "keywords": ["green-web", "carbon-footprint", "co2", "sustainability", "audit", "puppeteer"],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@tgwf/co2": "^0.16.4",
+    "axios": "^1.7.9",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "morgan": "^1.10.0",
+    "puppeteer": "^23.11.1",
+    "sqlite3": "^5.1.7"
+  }
+}
