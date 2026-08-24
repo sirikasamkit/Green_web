@@ -7,7 +7,7 @@ const apiClient = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
-  timeout: 45000, // Puppeteer scans can take up to 35-40s
+  timeout: 90000, // Generous upper-bound for heavy website scans
 });
 
 export const scanApi = {

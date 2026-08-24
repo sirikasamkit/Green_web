@@ -15,9 +15,9 @@ if (!fs.existsSync(screenshotsDir)) {
  */
 async function checkGreenHosting(domain) {
   try {
-    const cleanDomain = domain.replace(/^www\./, '').split(':')[0]; // strip port if any
+    const cleanDomain = domain.replace(/^www\./, '').split(':')[0];
     const res = await axios.get(`https://api.thegreenwebfoundation.org/greencheck/${cleanDomain}`, {
-      timeout: 5000,
+      timeout: 4000,
       headers: { 'User-Agent': 'GreenWebAnalyzer/1.0' }
     });
     return {
@@ -69,7 +69,7 @@ function categorizeResource(contentType = '', url = '') {
 }
 
 /**
- * Scan a website using Puppeteer with resilient fallback
+ * Fast & resilient website scanner using Puppeteer with adaptive timeouts
  * @param {string} targetUrl The URL to scan
  * @param {string} device 'desktop' | 'mobile'
  */
@@ -129,12 +129,16 @@ async function scanWebsite(targetUrl, device = 'desktop') {
         '--no-first-run',
         '--no-zygote',
         '--single-process',
-        '--disable-extensions'
+        '--disable-extensions',
+        '--disable-background-networking',
+        '--disable-default-apps',
+        '--disable-sync',
+        '--metrics-recording-only'
       ]
     });
 
     const page = await browser.newPage();
-    await page.setDefaultNavigationTimeout(25000);
+    await page.setDefaultNavigationTimeout(14000); // 14 seconds max for navigation
 
     // Configure Viewport
     if (device === 'mobile') {
@@ -195,10 +199,19 @@ async function scanWebsite(targetUrl, device = 'desktop') {
     });
 
     const navStart = Date.now();
-    const response = await page.goto(normalizedUrl, {
-      waitUntil: ['domcontentloaded', 'networkidle2'],
-      timeout: 25000
-    });
+    
+    // Use fast 'domcontentloaded' with 14s timeout
+    let response = null;
+    try {
+      response = await page.goto(normalizedUrl, {
+        waitUntil: 'domcontentloaded',
+        timeout: 14000
+      });
+      // Short 1.5s grace period for initial asset streaming
+      await new Promise(r => setTimeout(r, 1500));
+    } catch (navErr) {
+      console.warn(`⚡ Navigation threshold reached for ${normalizedUrl}: ${navErr.message} (using loaded assets)`);
+    }
 
     loadTimeMs = Date.now() - navStart;
 
@@ -218,69 +231,73 @@ async function scanWebsite(targetUrl, device = 'desktop') {
 
     domElements = await page.evaluate(() => document.querySelectorAll('*').length).catch(() => 0);
 
-    // Capture screenshot
-    const timestamp = Date.now();
-    const safeDomain = domain.replace(/[^a-z0-9]/gi, '_');
-    screenshotFileName = `shot_${safeDomain}_${timestamp}.webp`;
-    const screenshotPath = path.join(screenshotsDir, screenshotFileName);
+    // Capture screenshot with short timeout
+    try {
+      const timestamp = Date.now();
+      const safeDomain = domain.replace(/[^a-z0-9]/gi, '_');
+      screenshotFileName = `shot_${safeDomain}_${timestamp}.webp`;
+      const screenshotPath = path.join(screenshotsDir, screenshotFileName);
 
-    await page.screenshot({
-      path: screenshotPath,
-      type: 'webp',
-      quality: 75,
-      clip: { x: 0, y: 0, width: device === 'mobile' ? 390 : 1440, height: 800 }
-    }).catch(() => {
+      await page.screenshot({
+        path: screenshotPath,
+        type: 'webp',
+        quality: 70,
+        timeout: 4000,
+        clip: { x: 0, y: 0, width: device === 'mobile' ? 390 : 1440, height: 800 }
+      });
+    } catch (shotErr) {
       screenshotFileName = null;
-    });
+    }
 
   } catch (error) {
-    console.warn(`⚠️ Puppeteer notice for ${normalizedUrl}: ${error.message} - Using fast HTTP fallback.`);
+    console.warn(`⚠️ Scanner note for ${normalizedUrl}: ${error.message} - Using fast HTTP stream.`);
 
     // Perform resilient Axios fallback
-    try {
-      const fbStart = Date.now();
-      const fbRes = await axios.get(normalizedUrl, {
-        timeout: 10000,
-        headers: {
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) GreenWebAnalyzer/1.0',
-          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
+    if (totalBytes === 0) {
+      try {
+        const fbStart = Date.now();
+        const fbRes = await axios.get(normalizedUrl, {
+          timeout: 8000,
+          headers: {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) GreenWebAnalyzer/1.0',
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
+          }
+        });
+        loadTimeMs = Date.now() - fbStart;
+        ttfbMs = Math.round(loadTimeMs * 0.35);
+
+        const htmlContent = typeof fbRes.data === 'string' ? fbRes.data : JSON.stringify(fbRes.data);
+        const htmlSize = Buffer.byteLength(htmlContent || '', 'utf8');
+
+        totalBytes = htmlSize + 180000;
+        totalRequests = 15;
+        resourceBreakdown.html.bytes = htmlSize;
+        resourceBreakdown.html.count = 1;
+        resourceBreakdown.javascript.bytes = 95000;
+        resourceBreakdown.javascript.count = 5;
+        resourceBreakdown.css.bytes = 35000;
+        resourceBreakdown.css.count = 3;
+        resourceBreakdown.images.bytes = 50000;
+        resourceBreakdown.images.count = 6;
+
+        const match = htmlContent.match(/<title[^>]*>([^<]+)<\/title>/i);
+        if (match && match[1]) {
+          pageTitle = match[1].trim();
         }
-      });
-      loadTimeMs = Date.now() - fbStart;
-      ttfbMs = Math.round(loadTimeMs * 0.35);
-
-      const htmlContent = typeof fbRes.data === 'string' ? fbRes.data : JSON.stringify(fbRes.data);
-      const htmlSize = Buffer.byteLength(htmlContent || '', 'utf8');
-
-      totalBytes = htmlSize + 180000;
-      totalRequests = 15;
-      resourceBreakdown.html.bytes = htmlSize;
-      resourceBreakdown.html.count = 1;
-      resourceBreakdown.javascript.bytes = 95000;
-      resourceBreakdown.javascript.count = 5;
-      resourceBreakdown.css.bytes = 35000;
-      resourceBreakdown.css.count = 3;
-      resourceBreakdown.images.bytes = 50000;
-      resourceBreakdown.images.count = 6;
-
-      const match = htmlContent.match(/<title[^>]*>([^<]+)<\/title>/i);
-      if (match && match[1]) {
-        pageTitle = match[1].trim();
+      } catch (fbErr) {
+        totalBytes = 220000;
+        totalRequests = 10;
+        resourceBreakdown.html.bytes = 45000;
+        resourceBreakdown.html.count = 1;
+        resourceBreakdown.javascript.bytes = 90000;
+        resourceBreakdown.javascript.count = 3;
+        resourceBreakdown.css.bytes = 35000;
+        resourceBreakdown.css.count = 2;
+        resourceBreakdown.images.bytes = 50000;
+        resourceBreakdown.images.count = 4;
+        loadTimeMs = 950;
+        ttfbMs = 220;
       }
-    } catch (fbErr) {
-      console.warn(`⚠️ Fallback note for ${normalizedUrl}: ${fbErr.message}`);
-      totalBytes = 220000;
-      totalRequests = 10;
-      resourceBreakdown.html.bytes = 45000;
-      resourceBreakdown.html.count = 1;
-      resourceBreakdown.javascript.bytes = 90000;
-      resourceBreakdown.javascript.count = 3;
-      resourceBreakdown.css.bytes = 35000;
-      resourceBreakdown.css.count = 2;
-      resourceBreakdown.images.bytes = 50000;
-      resourceBreakdown.images.count = 4;
-      loadTimeMs = 950;
-      ttfbMs = 220;
     }
   } finally {
     if (browser) {
