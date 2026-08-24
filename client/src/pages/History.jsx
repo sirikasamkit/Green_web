@@ -42,11 +42,11 @@ export default function History() {
         sort: sortBy,
         limit: 50,
       });
-      if (res?.data) {
-        setScans(res.data);
-      }
+      const scanList = Array.isArray(res?.data) ? res.data : (res?.data?.scans || []);
+      setScans(scanList);
     } catch (err) {
       console.error('Failed to load history:', err);
+      setScans([]);
     } finally {
       setLoading(false);
     }

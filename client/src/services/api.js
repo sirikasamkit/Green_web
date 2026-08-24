@@ -12,16 +12,15 @@ const apiClient = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
-  timeout: 15000, // 15s timeout before seamless client-side scanner takes over
+  timeout: 15000,
 });
 
 export const scanApi = {
-  // Scan a new URL with automatic fallback to in-browser engine
+  // Scan a new URL with automatic in-browser engine fallback
   scanUrl: async (url, device = 'desktop', monthlyViews = 10000) => {
     try {
       const response = await apiClient.post('/scan', { url, device, monthlyViews });
       if (response.data && response.data.data) {
-        // Save copy in localStorage
         try {
           const id = response.data.data.id;
           localStorage.setItem('greenweb_scan_' + id, JSON.stringify(response.data.data));
@@ -32,10 +31,9 @@ export const scanApi = {
         return response.data;
       }
     } catch (err) {
-      console.warn('⚡ Switching to Client-Side Autonomous Scanner:', err.message);
+      console.warn('⚡ Using Client-Side Autonomous Scanner:', err.message);
     }
 
-    // In-browser autonomous engine fallback
     const clientData = await runClientSideScan(url, device);
     return {
       success: true,
@@ -65,25 +63,22 @@ export const scanApi = {
     throw new Error('Scan record not found.');
   },
 
-  // Get scan history
+  // Get scan history (returns array of scans in res.data)
   getHistory: async (params = {}) => {
     try {
       const response = await apiClient.get('/scans', { params });
       if (response.data && response.data.data) return response.data;
     } catch (err) {}
 
-    // Fallback to client history
     const history = JSON.parse(localStorage.getItem('greenweb_scans') || '[]');
     return {
       success: true,
-      data: {
-        scans: history,
-        pagination: {
-          total: history.length,
-          page: 1,
-          limit: 50,
-          totalPages: 1
-        }
+      data: history,
+      pagination: {
+        total: history.length,
+        page: 1,
+        limit: 50,
+        totalPages: 1
       }
     };
   },
@@ -110,9 +105,21 @@ export const scanApi = {
 
     const history = JSON.parse(localStorage.getItem('greenweb_scans') || '[]');
     const items = history.filter(s => ids.includes(s.id));
+    const winner = items.length > 0
+      ? [...items].sort((a, b) => (a.carbon_grams || 0) - (b.carbon_grams || 0))[0]
+      : null;
+
     return {
       success: true,
-      data: { items }
+      data: {
+        items,
+        winner,
+        comparison: {
+          totalCompared: items.length,
+          cleanest: winner ? winner.domain : null,
+          carbonDifference: items.length >= 2 ? Math.abs((items[0].carbon_grams || 0) - (items[1].carbon_grams || 0)).toFixed(3) : '0.000'
+        }
+      }
     };
   },
 

@@ -38,14 +38,16 @@ export default function Compare() {
   useEffect(() => {
     scanApi.getHistory({ limit: 30 })
       .then((res) => {
-        if (res?.data) {
-          setAvailableScans(res.data);
-          if (selectedIds.length === 0 && res.data.length >= 2) {
-            setSelectedIds([res.data[0].id, res.data[1].id]);
-          }
+        const list = Array.isArray(res?.data) ? res.data : (res?.data?.scans || []);
+        setAvailableScans(list);
+        if (selectedIds.length === 0 && list.length >= 2) {
+          setSelectedIds([list[0].id, list[1].id]);
         }
       })
-      .catch(console.error);
+      .catch((err) => {
+        console.error(err);
+        setAvailableScans([]);
+      });
   }, []);
 
   // Fetch comparison data when selectedIds change
