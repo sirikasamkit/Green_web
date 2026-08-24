@@ -24,6 +24,11 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 app.use(morgan('dev'));
 
+// Top-level Health Check for Cloud Platforms (Render, AWS, Railway)
+app.get('/health', (req, res) => {
+  res.status(200).json({ status: 'ok', timestamp: new Date().toISOString() });
+});
+
 // Auto-unregister any stale service workers from previous projects on port 5000
 app.get('/service-worker.js', (req, res) => {
   res.setHeader('Content-Type', 'application/javascript');
@@ -55,7 +60,7 @@ if (fs.existsSync(clientDistPath)) {
 
   // SPA fallback: return index.html for all non-API GET requests
   app.get('*', (req, res, next) => {
-    if (req.path.startsWith('/api') || req.path.startsWith('/screenshots')) {
+    if (req.path.startsWith('/api') || req.path.startsWith('/screenshots') || req.path.startsWith('/health')) {
       return next();
     }
     res.sendFile(path.join(clientDistPath, 'index.html'));
@@ -90,9 +95,9 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: 'Internal server error', message: err.message });
 });
 
-// Start Server
-app.listen(PORT, () => {
-  console.log(`🚀 Green Web Analyzer Full-Stack App running at http://localhost:${PORT}`);
+// Start Server on 0.0.0.0 for universal cloud & local routing
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`🚀 Green Web Analyzer Full-Stack App running on http://0.0.0.0:${PORT}`);
   console.log(`🌿 Carbon Engine & Frontend UI ready on port ${PORT}`);
 });
 
