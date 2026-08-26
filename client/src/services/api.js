@@ -4,7 +4,7 @@ import { runClientSideScan } from './clientScanner';
 const API_BASE_URL =
   import.meta.env.VITE_API_URL ||
   (typeof window !== 'undefined' && window.location.hostname.includes('pages.dev')
-    ? 'https://green-web.onrender.com/api'
+    ? 'https://green-web-backend.onrender.com/api'
     : '/api');
 
 const apiClient = axios.create({
@@ -12,11 +12,11 @@ const apiClient = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
-  timeout: 15000,
+  timeout: 50000, // 50s timeout to allow full Puppeteer scan on Render
 });
 
 export const scanApi = {
-  // Scan a new URL with automatic in-browser engine fallback
+  // Scan a new URL: try backend Puppeteer first
   scanUrl: async (url, device = 'desktop', monthlyViews = 10000) => {
     try {
       const response = await apiClient.post('/scan', { url, device, monthlyViews });
@@ -31,9 +31,10 @@ export const scanApi = {
         return response.data;
       }
     } catch (err) {
-      console.warn('⚡ Using Client-Side Autonomous Scanner:', err.message);
+      console.warn('⚠️ Server scan timed out or unreachable, using client engine:', err.message);
     }
 
+    // In-browser engine fallback if backend is sleeping
     const clientData = await runClientSideScan(url, device);
     return {
       success: true,
@@ -63,11 +64,19 @@ export const scanApi = {
     throw new Error('Scan record not found.');
   },
 
-  // Get scan history (returns array of scans in res.data)
+  // Get scan history
   getHistory: async (params = {}) => {
     try {
       const response = await apiClient.get('/scans', { params });
-      if (response.data && response.data.data) return response.data;
+      if (response.data && response.data.data) {
+        const list = Array.isArray(response.data.data)
+          ? response.data.data
+          : (response.data.data?.scans || []);
+        return {
+          success: true,
+          data: list
+        };
+      }
     } catch (err) {}
 
     const history = JSON.parse(localStorage.getItem('greenweb_scans') || '[]');
