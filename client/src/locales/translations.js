@@ -41,6 +41,11 @@ export const translations = {
         '📋 กำลังจัดทำรายงานผลการประเมินและคำแนะนำ...',
       ],
     },
+    errors: {
+      nxdomain: 'ไม่สามารถเข้าถึงเว็บไซต์ได้ (DNS Error: NXDOMAIN ไม่พบโดเมนนี้ในโลกอินเทอร์เน็ต) กรุณาตรวจสอบ URL อีกครั้ง',
+      invalidUrl: 'URL ไม่ถูกต้อง: กรุณาระบุชื่อเว็บไซต์พร้อมนามสกุลโดเมนที่ถูกต้อง (เช่น example.com หรือ .org)',
+      generic: 'ไม่สามารถเชื่อมต่อไปยังเว็บไซต์เป้าหมายได้ กรุณาตรวจสอบ URL อีกครั้ง',
+    },
     statsBar: {
       scannedCount: 'เว็บไซต์ที่ถูกประเมินแล้ว',
       avgCo2: 'เฉลี่ย CO2e / การเข้าชม',
@@ -268,6 +273,11 @@ export const translations = {
         '⚡ Computing carbon footprint with Sustainable Web Design (SWD v4)...',
         '📋 Generating actionable sustainability audit report...',
       ],
+    },
+    errors: {
+      nxdomain: 'Unable to reach website: Could not resolve domain name (DNS Error: NXDOMAIN). Please check the URL.',
+      invalidUrl: 'Invalid URL: Please enter a valid website address with a domain extension (e.g. example.com).',
+      generic: 'Failed to connect to the target website. Please check the URL and try again.',
     },
     statsBar: {
       scannedCount: 'Websites Audited',

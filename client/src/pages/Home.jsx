@@ -41,11 +41,18 @@ export default function Home() {
       }
     } catch (err) {
       console.error('Scan error:', err);
-      setError(
-        err.response?.data?.error ||
-        err.message ||
-        'Failed to connect to the target website. Please check the URL and try again.'
-      );
+      const rawMsg = err.response?.data?.error || err.message || '';
+      let displayError = t('errors.generic', 'Failed to connect to the target website. Please check the URL and try again.');
+
+      if (rawMsg.includes('NXDOMAIN') || rawMsg.includes('ไม่พบ') || rawMsg.includes('unreachable') || rawMsg.includes('ENOTFOUND')) {
+        displayError = t('errors.nxdomain', 'Unable to reach website: Could not resolve domain name (DNS Error: NXDOMAIN). Please verify the URL.');
+      } else if (rawMsg.includes('ขาดนามสกุล') || rawMsg.includes('valid domain') || rawMsg.includes('extension')) {
+        displayError = t('errors.invalidUrl', 'Invalid URL: Please enter a full domain with extension (e.g. example.com).');
+      } else if (rawMsg) {
+        displayError = rawMsg;
+      }
+
+      setError(displayError);
       setIsScanning(false);
     }
   };
