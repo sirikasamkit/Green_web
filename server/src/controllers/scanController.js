@@ -16,6 +16,15 @@ async function scanUrl(req, res) {
     }
 
     const cleanUrl = url.trim();
+
+    // Validate proper domain structure with valid extension (e.g. .com, .net, .co.th)
+    const domainRegex = /^(https?:\/\/)?([a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?\.)+[a-zA-Z]{2,}(\/.*)?$/i;
+    if (!domainRegex.test(cleanUrl) && !cleanUrl.includes('localhost')) {
+      return res.status(400).json({
+        error: `URL ไม่ถูกต้อง: "${cleanUrl}" ขาดนามสกุลโดเมนที่ถูกต้อง (กรุณาระบุเช่น .com, .org, .co.th)`
+      });
+    }
+
     console.log(`🔍 [SCAN INITIATED] URL: ${cleanUrl} | Device: ${device}`);
 
     // 1. Scan website with Puppeteer / HTTP fallback

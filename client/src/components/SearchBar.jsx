@@ -41,8 +41,17 @@ export default function SearchBar({ onScan, isLoading, initialUrl = '' }) {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!url.trim() || isLoading) return;
-    onScan(url.trim(), device);
+    const cleanUrl = url.trim();
+    if (!cleanUrl || isLoading) return;
+
+    // Check if user forgot domain extension (e.g. typed www.something without .com)
+    const domainRegex = /^(https?:\/\/)?([a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?\.)+[a-zA-Z]{2,}(\/.*)?$/i;
+    if (!domainRegex.test(cleanUrl) && !cleanUrl.includes('localhost')) {
+      alert(`URL "${cleanUrl}" ขาดนามสกุลโดเมนที่ถูกต้อง กรุณาระบุ เช่น ${cleanUrl}.com หรือ .org`);
+      return;
+    }
+
+    onScan(cleanUrl, device);
   };
 
   const handleSelectPreset = (presetUrl) => {
