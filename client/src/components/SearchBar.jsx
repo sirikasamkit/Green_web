@@ -39,19 +39,34 @@ export default function SearchBar({ onScan, isLoading, initialUrl = '' }) {
     return () => clearInterval(interval);
   }, [isLoading, steps.length]);
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    const cleanUrl = url.trim();
-    if (!cleanUrl || isLoading) return;
+  const normalizeUrlInput = (input) => {
+    let raw = (input || '').trim();
+    if (!raw) return '';
 
-    // Check if user forgot domain extension (e.g. typed www.something without .com)
-    const domainRegex = /^(https?:\/\/)?([a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?\.)+[a-zA-Z]{2,}(\/.*)?$/i;
-    if (!domainRegex.test(cleanUrl) && !cleanUrl.includes('localhost')) {
-      alert(`URL "${cleanUrl}" ขาดนามสกุลโดเมนที่ถูกต้อง กรุณาระบุ เช่น ${cleanUrl}.com หรือ .org`);
-      return;
+    // If user entered casual name without dot (e.g. "youtube", "roblox", "apple")
+    if (!raw.includes('.') && !raw.includes('localhost')) {
+      return `https://www.${raw.toLowerCase()}.com`;
     }
 
-    onScan(cleanUrl, device);
+    // If user entered "www.name" without extension
+    if (raw.toLowerCase().startsWith('www.') && raw.split('.').length === 2) {
+      return `https://${raw.toLowerCase()}.com`;
+    }
+
+    // If missing protocol, prepend https://
+    if (!/^https?:\/\//i.test(raw)) {
+      raw = `https://${raw}`;
+    }
+
+    return raw;
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    const formatted = normalizeUrlInput(url);
+    if (!formatted || isLoading) return;
+
+    onScan(formatted, device);
   };
 
   const handleSelectPreset = (presetUrl) => {

@@ -16,14 +16,15 @@ async function scanUrl(req, res) {
       return res.status(400).json({ error: 'Please enter a valid website URL.' });
     }
 
-    const cleanUrl = url.trim();
+    let cleanUrl = url.trim();
 
-    // Validate proper domain structure with valid extension (e.g. .com, .net, .co.th)
-    const domainRegex = /^(https?:\/\/)?([a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?\.)+[a-zA-Z]{2,}(\/.*)?$/i;
-    if (!domainRegex.test(cleanUrl) && !cleanUrl.includes('localhost')) {
-      return res.status(400).json({
-        error: `URL ไม่ถูกต้อง: "${cleanUrl}" ขาดนามสกุลโดเมนที่ถูกต้อง (กรุณาระบุเช่น .com, .org, .co.th)`
-      });
+    // Auto-complete casual names (e.g. "youtube", "roblox", "apple")
+    if (!cleanUrl.includes('.') && !cleanUrl.includes('localhost')) {
+      cleanUrl = `https://www.${cleanUrl.toLowerCase()}.com`;
+    } else if (cleanUrl.toLowerCase().startsWith('www.') && cleanUrl.split('.').length === 2) {
+      cleanUrl = `https://${cleanUrl.toLowerCase()}.com`;
+    } else if (!/^https?:\/\//i.test(cleanUrl)) {
+      cleanUrl = `https://${cleanUrl}`;
     }
 
     // Extract domain and verify DNS resolution
