@@ -1,25 +1,17 @@
-const { co2: CO2Module } = require('@tgwf/co2');
-
-// Initialize CO2 Calculator with Sustainable Web Design (SWD) model
-let swdCalculator;
-try {
-  swdCalculator = new CO2Module({ model: 'swd' });
-} catch (e) {
-  console.warn('⚠️ @tgwf/co2 SWD initialization fallback:', e.message);
-  // Fallback simplified SWD model if needed
-  swdCalculator = {
-    perByte: (bytes, green = false) => {
-      // SWD v4 standard approximation: ~0.2g CO2e per 1MB for dirty host, ~0.15g for green host
-      const kwhPerByte = 0.812 / (1024 * 1024 * 1024);
-      const carbonIntensity = green ? 50 : 442; // gCO2/kWh
-      return bytes * kwhPerByte * carbonIntensity;
-    }
-  };
-}
+const REGIONAL_GRIDS = {
+  GLOBAL: { name: 'Global Average', flag: '🌐', intensity: 442 },
+  TH: { name: 'Thailand', flag: '🇹🇭', intensity: 456 },
+  US: { name: 'United States', flag: '🇺🇸', intensity: 386 },
+  FR: { name: 'France (Nuclear & Clean)', flag: '🇫🇷', intensity: 58 },
+  DE: { name: 'Germany', flag: '🇩🇪', intensity: 385 },
+  JP: { name: 'Japan', flag: '🇯🇵', intensity: 462 },
+  GB: { name: 'United Kingdom', flag: '🇬🇧', intensity: 207 },
+  SG: { name: 'Singapore', flag: '🇸🇬', intensity: 408 },
+  NO: { name: 'Norway (Hydro Clean)', flag: '🇳🇴', intensity: 28 },
+};
 
 /**
  * Determine letter grade based on carbon emissions (g CO2e) per page view
- * Based on Sustainable Web Design grading scale
  */
 function calculateGrade(grams) {
   if (grams <= 0.095) return { grade: 'A+', color: '#10B981', label: 'Exceptional', rating: 95 };
@@ -35,8 +27,6 @@ function calculateGrade(grams) {
  * Estimate cleaner than percentage compared to global distribution
  */
 function calculateCleanerThan(grams) {
-  // Global median is ~ 0.50g
-  // Scale mapping: 0.05g -> 95%, 0.20g -> 80%, 0.50g -> 50%, 1.0g -> 25%, 2.0g+ -> 5%
   if (grams <= 0.05) return 96;
   if (grams <= 0.10) return 92;
   if (grams <= 0.20) return 85;
@@ -50,67 +40,170 @@ function calculateCleanerThan(grams) {
 }
 
 /**
- * Main Carbon calculation engine
- * @param {number} bytes Total page transfer size in bytes
- * @param {boolean} isGreenHost Whether server runs on renewable energy
- * @param {number} monthlyViews Projected monthly page visits (default 10,000)
+ * Primary SWD v4 Model (Sustainable Web Design)
  */
-function calculateCarbonMetrics(bytes, isGreenHost = false, monthlyViews = 10000) {
+function calculateSwdModel(bytes, isGreenHost = false) {
+  const safeBytes = Math.max(0, Number(bytes) || 0);
+  const dataInGb = safeBytes / (1024 * 1024 * 1024);
+  const energyKwh = dataInGb * 0.812;
+
+  const dcIntensity = isGreenHost ? 50 : 442;
+  const gridIntensity = 442;
+
+  const firstVisit =
+    (energyKwh * 0.15 * dcIntensity) +
+    (energyKwh * 0.14 * gridIntensity) +
+    (energyKwh * 0.52 * gridIntensity) +
+    (energyKwh * 0.19 * gridIntensity);
+
+  const returnVisit = firstVisit * 0.25;
+  const blendedGrams = Number(((firstVisit * 0.75) + (returnVisit * 0.25)).toFixed(3));
+
+  return {
+    grams: blendedGrams,
+    firstVisit: Number(firstVisit.toFixed(3)),
+    returnVisit: Number(returnVisit.toFixed(3)),
+    modelName: 'Sustainable Web Design (SWD v4)',
+    modelCode: 'swd'
+  };
+}
+
+/**
+ * OneByte Model (The Shift Project)
+ */
+function calculateOneByteModel(bytes, isGreenHost = false) {
+  const safeBytes = Math.max(0, Number(bytes) || 0);
+  const dataInGb = safeBytes / (1024 * 1024 * 1024);
+  const energyKwh = dataInGb * 0.06; // 0.06 kWh/GB direct transfer
+  const intensity = isGreenHost ? 50 : 442;
+  const grams = Number((energyKwh * intensity).toFixed(3));
+
+  return {
+    grams,
+    firstVisit: grams,
+    returnVisit: Number((grams * 0.25).toFixed(3)),
+    modelName: 'OneByte Model (The Shift Project)',
+    modelCode: 'onebyte'
+  };
+}
+
+/**
+ * Green Software Foundation SCI Model (ISO/IEC Specification)
+ */
+function calculateSciModel(bytes, isGreenHost = false) {
+  const safeBytes = Math.max(0, Number(bytes) || 0);
+  const dataInGb = safeBytes / (1024 * 1024 * 1024);
+  const energyKwh = dataInGb * 0.45;
+  const intensity = isGreenHost ? 50 : 442;
+  const operational = energyKwh * intensity;
+  const embodied = dataInGb * 0.08; // hardware embodied depreciation
+  const grams = Number((operational + embodied).toFixed(3));
+
+  return {
+    grams,
+    firstVisit: grams,
+    returnVisit: Number((grams * 0.3).toFixed(3)),
+    modelName: 'Software Carbon Intensity (GSF SCI)',
+    modelCode: 'sci'
+  };
+}
+
+/**
+ * W3C WSG Regional Model
+ */
+function calculateRegionalModel(bytes, isGreenHost = false, regionCode = 'TH') {
+  const safeBytes = Math.max(0, Number(bytes) || 0);
+  const dataInGb = safeBytes / (1024 * 1024 * 1024);
+  const energyKwh = dataInGb * 0.812;
+
+  const region = REGIONAL_GRIDS[regionCode] || REGIONAL_GRIDS.GLOBAL;
+  const dcIntensity = isGreenHost ? 50 : region.intensity;
+  const gridIntensity = region.intensity;
+
+  const firstVisit =
+    (energyKwh * 0.15 * dcIntensity) +
+    (energyKwh * 0.14 * gridIntensity) +
+    (energyKwh * 0.52 * gridIntensity) +
+    (energyKwh * 0.19 * gridIntensity);
+
+  const returnVisit = firstVisit * 0.25;
+  const blendedGrams = Number(((firstVisit * 0.75) + (returnVisit * 0.25)).toFixed(3));
+
+  return {
+    grams: blendedGrams,
+    firstVisit: Number(firstVisit.toFixed(3)),
+    returnVisit: Number(returnVisit.toFixed(3)),
+    region: region.name,
+    flag: region.flag,
+    intensity: region.intensity,
+    modelName: `W3C Regional Grid (${region.flag} ${region.name})`,
+    modelCode: 'regional'
+  };
+}
+
+/**
+ * Main Carbon Calculation Engine supporting ALL calculation formulas
+ */
+function calculateCarbonMetrics(bytes, isGreenHost = false, monthlyViews = 10000, modelType = 'swd', regionCode = 'TH') {
   const safeBytes = Math.max(0, Number(bytes) || 0);
 
-  let carbonFirstVisit = 0;
-  let carbonReturnVisit = 0;
+  // Calculate primary model
+  const swdResult = calculateSwdModel(safeBytes, isGreenHost);
+  const oneByteResult = calculateOneByteModel(safeBytes, isGreenHost);
+  const sciResult = calculateSciModel(safeBytes, isGreenHost);
+  const regionalResult = calculateRegionalModel(safeBytes, isGreenHost, regionCode);
 
-  try {
-    if (swdCalculator && typeof swdCalculator.perByte === 'function') {
-      carbonFirstVisit = Number(swdCalculator.perByte(safeBytes, isGreenHost));
-      // Return visit assumption (approx 75% cached resources loaded locally)
-      carbonReturnVisit = Number(swdCalculator.perByte(safeBytes * 0.25, isGreenHost));
-    }
-  } catch (err) {
-    console.error('Error in swdCalculator:', err);
-    carbonFirstVisit = (safeBytes / (1024 * 1024)) * (isGreenHost ? 0.15 : 0.24);
-    carbonReturnVisit = carbonFirstVisit * 0.25;
-  }
+  let activeResult = swdResult;
+  if (modelType === 'onebyte') activeResult = oneByteResult;
+  if (modelType === 'sci') activeResult = sciResult;
+  if (modelType === 'regional') activeResult = regionalResult;
 
-  // Blended average per visit (assuming 75% new, 25% returning)
-  const carbonPerVisit = (carbonFirstVisit * 0.75) + (carbonReturnVisit * 0.25);
-  const carbonGrams = Number(carbonPerVisit.toFixed(3));
-
+  const carbonGrams = activeResult.grams;
   const gradeInfo = calculateGrade(carbonGrams);
   const cleanerThan = calculateCleanerThan(carbonGrams);
 
-  // Annual projections (12 months)
   const annualViews = monthlyViews * 12;
   const annualGrams = carbonGrams * annualViews;
   const annualKg = Number((annualGrams / 1000).toFixed(2));
 
-  // Real-world environmental equivalencies based on annual metrics
   const equivalencies = {
     annual_kg_co2: annualKg,
-    trees_needed: Number((annualGrams / 21770).toFixed(2)), // 1 mature tree absorbs ~21.77 kg CO2/year
-    car_km_driven: Number((annualGrams / 120).toFixed(1)), // Standard combustion car ~120g CO2/km
-    tea_cups_boiled: Math.round(annualGrams / 7), // Boiling a cup of tea ~7g CO2
-    smartphone_charges: Math.round(annualGrams / 8.3), // 1 phone charge ~8.3g CO2
-    kwh_electricity: Number((annualGrams / 442).toFixed(2)) // Grid average ~442g CO2/kWh
+    trees_needed: Number((annualGrams / 21770).toFixed(2)),
+    car_km_driven: Number((annualGrams / 120).toFixed(1)),
+    tea_cups_boiled: Math.round(annualGrams / 7),
+    smartphone_charges: Math.round(annualGrams / 8.3),
+    kwh_electricity: Number((annualGrams / 442).toFixed(2))
   };
 
   return {
     carbon_grams: carbonGrams,
-    carbon_first_visit: Number(carbonFirstVisit.toFixed(3)),
-    carbon_return_visit: Number(carbonReturnVisit.toFixed(3)),
+    carbon_first_visit: activeResult.firstVisit,
+    carbon_return_visit: activeResult.returnVisit,
     grade: gradeInfo.grade,
     grade_label: gradeInfo.label,
     grade_color: gradeInfo.color,
     score_rating: gradeInfo.rating,
     cleaner_than_pct: cleanerThan,
     equivalencies,
-    monthly_views_assumed: monthlyViews
+    monthly_views_assumed: monthlyViews,
+    active_model: modelType,
+    all_models: {
+      swd: swdResult,
+      onebyte: oneByteResult,
+      sci: sciResult,
+      regional: regionalResult
+    },
+    available_regions: REGIONAL_GRIDS
   };
 }
 
 module.exports = {
   calculateCarbonMetrics,
   calculateGrade,
-  calculateCleanerThan
+  calculateCleanerThan,
+  calculateSwdModel,
+  calculateOneByteModel,
+  calculateSciModel,
+  calculateRegionalModel,
+  REGIONAL_GRIDS
 };

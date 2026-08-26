@@ -15,12 +15,15 @@ import {
   Monitor,
   Smartphone,
   ExternalLink,
-  Printer
+  Printer,
+  Scale,
+  Cpu
 } from 'lucide-react';
 import GradeBadge from '../components/GradeBadge';
 import { ResourceBreakdownChart, CarbonBenchmarkChart, EquivalenciesGrid } from '../components/Charts';
 import RecCard from '../components/RecCard';
 import { scanApi } from '../services/api';
+import { calculateCarbonMetrics, REGIONAL_GRIDS } from '../services/clientScanner';
 import { useLanguage } from '../context/LanguageContext';
 
 function formatBytes(bytes) {
@@ -42,6 +45,10 @@ export default function ScanResult() {
   const [monthlyTraffic, setMonthlyTraffic] = useState(10000);
   const [filterImpact, setFilterImpact] = useState('ALL');
   const [copiedUrl, setCopiedUrl] = useState(false);
+
+  // Multi-Model Calculation State
+  const [calculationModel, setCalculationModel] = useState('swd');
+  const [selectedRegion, setSelectedRegion] = useState('TH');
 
   useEffect(() => {
     if (!scan && id) {
@@ -126,18 +133,14 @@ export default function ScanResult() {
     );
   }
 
-  // Dynamic calculations based on monthly traffic slider
-  const safeGrams = Number(scan.carbon_grams) || 0;
-  const annualVisits = (Number(monthlyTraffic) || 10000) * 12;
-  const annualGrams = safeGrams * annualVisits;
-  const dynamicEquivalencies = {
-    annual_kg_co2: Number((annualGrams / 1000).toFixed(2)),
-    trees_needed: Number((annualGrams / 21770).toFixed(2)),
-    car_km_driven: Number((annualGrams / 120).toFixed(1)),
-    tea_cups_boiled: Math.round(annualGrams / 7),
-    smartphone_charges: Math.round(annualGrams / 8.3),
-    kwh_electricity: Number((annualGrams / 442).toFixed(2)),
-  };
+  // Calculate live metrics based on user's selected calculation formula
+  const activeMetrics = calculateCarbonMetrics(
+    scan.page_size_bytes || 0,
+    scan.is_green_host || false,
+    monthlyTraffic,
+    calculationModel,
+    selectedRegion
+  );
 
   const recommendations = scan.recommendations || [];
   const filteredRecs = recommendations.filter((r) => {
@@ -224,14 +227,108 @@ export default function ScanResult() {
         </div>
       </div>
 
+      {/* Multi-Model Formula Selector */}
+      <div className="glass-panel p-4 rounded-3xl border border-emerald-900/40 space-y-3">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+          <div className="flex items-center space-x-2">
+            <Scale className="w-4 h-4 text-emerald-400" />
+            <span className="text-xs font-bold text-white uppercase tracking-wider">
+              Calculation Model / เลือกระบบสูตรคำนวณ:
+            </span>
+          </div>
+          {calculationModel === 'regional' && (
+            <div className="flex items-center space-x-2">
+              <span className="text-[11px] text-slate-400">Target Region:</span>
+              <select
+                value={selectedRegion}
+                onChange={(e) => setSelectedRegion(e.target.value)}
+                className="bg-[#070d0a] border border-emerald-900/60 rounded-xl px-2.5 py-1 text-xs text-emerald-300 focus:outline-none"
+              >
+                {Object.keys(REGIONAL_GRIDS).map((key) => (
+                  <option key={key} value={key}>
+                    {REGIONAL_GRIDS[key].flag} {REGIONAL_GRIDS[key].name} ({REGIONAL_GRIDS[key].intensity} g/kWh)
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+        </div>
+
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+          <button
+            type="button"
+            onClick={() => setCalculationModel('swd')}
+            className={`p-3 rounded-2xl text-left border transition-all ${
+              calculationModel === 'swd'
+                ? 'bg-emerald-500/20 border-emerald-500 text-white shadow-md'
+                : 'bg-slate-900/60 border-slate-800 text-slate-400 hover:text-white'
+            }`}
+          >
+            <div className="text-xs font-bold flex items-center gap-1.5">
+              <span>🌿 SWD v4</span>
+              {calculationModel === 'swd' && <span className="text-[9px] bg-emerald-500 text-black px-1.5 py-0.2 rounded-full font-mono">ACTIVE</span>}
+            </div>
+            <div className="text-[10px] text-slate-400 mt-0.5">Sustainable Web Design (0.812 kWh/GB)</div>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setCalculationModel('onebyte')}
+            className={`p-3 rounded-2xl text-left border transition-all ${
+              calculationModel === 'onebyte'
+                ? 'bg-yellow-500/20 border-yellow-500 text-white shadow-md'
+                : 'bg-slate-900/60 border-slate-800 text-slate-400 hover:text-white'
+            }`}
+          >
+            <div className="text-xs font-bold flex items-center gap-1.5">
+              <span>⚡ OneByte</span>
+              {calculationModel === 'onebyte' && <span className="text-[9px] bg-yellow-500 text-black px-1.5 py-0.2 rounded-full font-mono">ACTIVE</span>}
+            </div>
+            <div className="text-[10px] text-slate-400 mt-0.5">The Shift Project (0.06 kWh/GB Network)</div>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setCalculationModel('sci')}
+            className={`p-3 rounded-2xl text-left border transition-all ${
+              calculationModel === 'sci'
+                ? 'bg-cyan-500/20 border-cyan-500 text-white shadow-md'
+                : 'bg-slate-900/60 border-slate-800 text-slate-400 hover:text-white'
+            }`}
+          >
+            <div className="text-xs font-bold flex items-center gap-1.5">
+              <span>🏛️ GSF SCI</span>
+              {calculationModel === 'sci' && <span className="text-[9px] bg-cyan-500 text-black px-1.5 py-0.2 rounded-full font-mono">ACTIVE</span>}
+            </div>
+            <div className="text-[10px] text-slate-400 mt-0.5">ISO Software Intensity (E × I + M)</div>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setCalculationModel('regional')}
+            className={`p-3 rounded-2xl text-left border transition-all ${
+              calculationModel === 'regional'
+                ? 'bg-purple-500/20 border-purple-500 text-white shadow-md'
+                : 'bg-slate-900/60 border-slate-800 text-slate-400 hover:text-white'
+            }`}
+          >
+            <div className="text-xs font-bold flex items-center gap-1.5">
+              <span>🌍 W3C Regional</span>
+              {calculationModel === 'regional' && <span className="text-[9px] bg-purple-500 text-black px-1.5 py-0.2 rounded-full font-mono">ACTIVE</span>}
+            </div>
+            <div className="text-[10px] text-slate-400 mt-0.5">Country-Specific Power Grid</div>
+          </button>
+        </div>
+      </div>
+
       {/* Main Score & Green Hosting Overview Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Col 1: Grade Badge */}
         <div className="lg:col-span-1">
           <GradeBadge
-            grade={scan.grade}
-            carbonGrams={scan.carbon_grams}
-            cleanerThan={scan.cleaner_than_pct}
+            grade={activeMetrics.grade}
+            carbonGrams={activeMetrics.carbon_grams}
+            cleanerThan={activeMetrics.cleaner_than_pct}
           />
         </div>
 
@@ -291,14 +388,14 @@ export default function ScanResult() {
             <div className="p-4 rounded-2xl bg-slate-900/60 border border-emerald-900/30">
               <div className="text-[11px] text-slate-400">{t('report.loadTime')}</div>
               <div className="text-lg sm:text-xl font-bold text-white font-mono mt-1">
-                {(scan.load_time_ms / 1000).toFixed(2)}s
+                {((scan.load_time_ms || 600) / 1000).toFixed(2)}s
               </div>
             </div>
 
             <div className="p-4 rounded-2xl bg-slate-900/60 border border-emerald-900/30">
               <div className="text-[11px] text-slate-400">{t('report.ttfb')}</div>
               <div className="text-lg sm:text-xl font-bold text-white font-mono mt-1">
-                {scan.ttfb_ms}ms
+                {scan.ttfb_ms || 120}ms
               </div>
             </div>
           </div>
@@ -325,7 +422,7 @@ export default function ScanResult() {
               className="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-emerald-400"
             />
 
-            <EquivalenciesGrid equivalencies={dynamicEquivalencies} monthlyViews={monthlyTraffic} />
+            <EquivalenciesGrid equivalencies={activeMetrics.equivalencies} monthlyViews={monthlyTraffic} />
           </div>
         </div>
       </div>
@@ -336,7 +433,7 @@ export default function ScanResult() {
           breakdown={scan.resource_breakdown}
           totalBytes={scan.page_size_bytes}
         />
-        <CarbonBenchmarkChart currentGrams={scan.carbon_grams} domain={scan.domain} />
+        <CarbonBenchmarkChart currentGrams={activeMetrics.carbon_grams} domain={scan.domain} />
       </div>
 
       {/* Actionable Eco Audit Recommendations */}
@@ -352,54 +449,36 @@ export default function ScanResult() {
             </p>
           </div>
 
-          {/* Filter Chips */}
-          <div className="flex items-center space-x-1.5 p-1 bg-slate-900 rounded-xl border border-emerald-900/40 text-xs">
-            {['ALL', 'HIGH', 'MEDIUM', 'LOW'].map((filter) => (
+          {/* Filter Pills */}
+          <div className="flex items-center space-x-1.5 bg-slate-900/80 p-1 rounded-2xl border border-emerald-900/40">
+            {['ALL', 'HIGH', 'MEDIUM', 'LOW'].map((lvl) => (
               <button
-                key={filter}
-                onClick={() => setFilterImpact(filter)}
-                className={`px-3 py-1 rounded-lg font-medium transition-all ${
-                  filterImpact === filter
-                    ? 'bg-emerald-500 text-black font-bold shadow-sm'
-                    : 'text-slate-400 hover:text-white'
+                key={lvl}
+                onClick={() => setFilterImpact(lvl)}
+                className={`px-3 py-1 rounded-xl text-xs font-bold transition-all ${
+                  filterImpact === lvl
+                    ? 'bg-emerald-500 text-slate-950 shadow-md'
+                    : 'text-slate-400 hover:text-slate-200'
                 }`}
               >
-                {filter === 'ALL' ? t('report.filterAll') : filter === 'HIGH' ? t('report.filterHigh') : filter === 'MEDIUM' ? t('report.filterMedium') : t('report.filterLow')}
+                {lvl}
               </button>
             ))}
           </div>
         </div>
 
-        {/* Recommendations list */}
         {filteredRecs.length > 0 ? (
-          <div className="space-y-3">
+          <div className="grid grid-cols-1 gap-4">
             {filteredRecs.map((rec) => (
               <RecCard key={rec.id} recommendation={rec} />
             ))}
           </div>
         ) : (
-          <div className="p-8 text-center glass-panel rounded-2xl text-xs text-slate-400">
-            No recommendations match the selected filter.
+          <div className="p-8 text-center glass-panel rounded-3xl text-slate-400 text-xs">
+            {t('report.noRecs')}
           </div>
         )}
       </div>
-
-      {/* Screenshot Preview Card if available */}
-      {scan.screenshot_url && (
-        <div className="glass-panel p-6 rounded-3xl border border-emerald-900/40 space-y-3">
-          <h3 className="text-sm font-bold text-white flex items-center gap-2">
-            <Globe className="w-4 h-4 text-emerald-400" />
-            {t('report.viewportRender')}
-          </h3>
-          <div className="rounded-2xl overflow-hidden border border-emerald-900/40 bg-black/50 max-h-96">
-            <img
-              src={scan.screenshot_url}
-              alt={`Screenshot of ${scan.domain}`}
-              className="w-full object-cover object-top hover:scale-[1.01] transition-transform duration-300"
-            />
-          </div>
-        </div>
-      )}
     </div>
   );
 }

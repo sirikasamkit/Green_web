@@ -1,12 +1,22 @@
-import React from 'react';
-import { BookOpen, Leaf, Zap, Scale, ExternalLink } from 'lucide-react';
+import React, { useState } from 'react';
+import { BookOpen, Leaf, Zap, Scale, ExternalLink, Globe, Cpu, ShieldCheck } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
+import { calculateCarbonMetrics, REGIONAL_GRIDS } from '../services/clientScanner';
 
 export default function Methodology() {
   const { t } = useLanguage();
+  const [sampleMb, setSampleMb] = useState(1.5);
+  const [isGreen, setIsGreen] = useState(false);
+  const [testRegion, setTestRegion] = useState('TH');
+
+  const testBytes = sampleMb * 1024 * 1024;
+  const swdCalc = calculateCarbonMetrics(testBytes, isGreen, 10000, 'swd', testRegion);
+  const oneByteCalc = calculateCarbonMetrics(testBytes, isGreen, 10000, 'onebyte', testRegion);
+  const sciCalc = calculateCarbonMetrics(testBytes, isGreen, 10000, 'sci', testRegion);
+  const regionalCalc = calculateCarbonMetrics(testBytes, isGreen, 10000, 'regional', testRegion);
 
   return (
-    <div className="max-w-4xl mx-auto px-4 sm:px-6 py-12 space-y-12 animate-fade-in">
+    <div className="max-w-5xl mx-auto px-4 sm:px-6 py-12 space-y-12 animate-fade-in">
       {/* Header */}
       <div className="text-center space-y-4">
         <div className="inline-flex items-center space-x-2 px-4 py-1.5 rounded-full bg-emerald-950/80 border border-emerald-500/30 text-xs font-semibold text-emerald-300">
@@ -21,6 +31,130 @@ export default function Methodology() {
         </p>
       </div>
 
+      {/* Interactive Multi-Model Formula Sandbox */}
+      <div className="glass-panel p-8 rounded-3xl border border-emerald-500/30 space-y-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-emerald-950 pb-4">
+          <div>
+            <h2 className="text-xl font-bold text-white flex items-center gap-2">
+              <Scale className="w-5 h-5 text-emerald-400" />
+              Interactive Multi-Model Comparison Simulator
+            </h2>
+            <p className="text-xs text-slate-400 mt-1">
+              Compare how the world's 4 recognized sustainability algorithms compute carbon emissions for the exact same webpage
+            </p>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => setIsGreen(!isGreen)}
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
+                isGreen ? 'bg-emerald-500 text-black' : 'bg-slate-900 text-slate-400 border border-slate-800'
+              }`}
+            >
+              <Leaf className="w-3.5 h-3.5" />
+              <span>{isGreen ? '100% Green Host' : 'Standard Grid Host'}</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Inputs */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="p-4 rounded-2xl bg-slate-900/60 border border-emerald-950 space-y-2">
+            <div className="flex justify-between text-xs">
+              <span className="text-slate-300 font-semibold">Simulated Page Weight</span>
+              <span className="font-mono text-emerald-400 font-bold">{sampleMb.toFixed(2)} MB</span>
+            </div>
+            <input
+              type="range"
+              min="0.1"
+              max="10.0"
+              step="0.1"
+              value={sampleMb}
+              onChange={(e) => setSampleMb(Number(e.target.value))}
+              className="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-emerald-400"
+            />
+          </div>
+
+          <div className="p-4 rounded-2xl bg-slate-900/60 border border-emerald-950 space-y-2">
+            <div className="flex justify-between text-xs">
+              <span className="text-slate-300 font-semibold">W3C Regional Power Grid</span>
+              <span className="font-mono text-purple-400 font-bold">{REGIONAL_GRIDS[testRegion].intensity} gCO2/kWh</span>
+            </div>
+            <select
+              value={testRegion}
+              onChange={(e) => setTestRegion(e.target.value)}
+              className="w-full bg-[#070d0a] border border-emerald-900/60 rounded-xl px-3 py-1.5 text-xs text-white focus:outline-none"
+            >
+              {Object.keys(REGIONAL_GRIDS).map((key) => (
+                <option key={key} value={key}>
+                  {REGIONAL_GRIDS[key].flag} {REGIONAL_GRIDS[key].name} ({REGIONAL_GRIDS[key].intensity} g/kWh)
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        {/* 4 Models Live Result Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {/* Model 1: SWD v4 */}
+          <div className="p-5 rounded-2xl bg-[#070d0a] border border-emerald-500/40 space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold text-emerald-400">🌿 SWD v4 Model</span>
+              <span className="text-[10px] bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded-full font-mono font-bold">Grade {swdCalc.grade}</span>
+            </div>
+            <div className="text-2xl font-mono font-extrabold text-white">
+              {swdCalc.carbon_grams} <span className="text-xs font-normal text-slate-400">g CO2e</span>
+            </div>
+            <p className="text-[11px] text-slate-400 leading-snug">
+              Sustainable Web Design 4-segment full ecosystem (0.812 kWh/GB).
+            </p>
+          </div>
+
+          {/* Model 2: OneByte */}
+          <div className="p-5 rounded-2xl bg-[#070d0a] border border-yellow-500/40 space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold text-yellow-400">⚡ OneByte Model</span>
+              <span className="text-[10px] bg-yellow-500/20 text-yellow-300 px-2 py-0.5 rounded-full font-mono font-bold">Grade {oneByteCalc.grade}</span>
+            </div>
+            <div className="text-2xl font-mono font-extrabold text-white">
+              {oneByteCalc.carbon_grams} <span className="text-xs font-normal text-slate-400">g CO2e</span>
+            </div>
+            <p className="text-[11px] text-slate-400 leading-snug">
+              The Shift Project network transfer operational electricity (0.06 kWh/GB).
+            </p>
+          </div>
+
+          {/* Model 3: GSF SCI */}
+          <div className="p-5 rounded-2xl bg-[#070d0a] border border-cyan-500/40 space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold text-cyan-400">🏛️ GSF SCI Model</span>
+              <span className="text-[10px] bg-cyan-500/20 text-cyan-300 px-2 py-0.5 rounded-full font-mono font-bold">Grade {sciCalc.grade}</span>
+            </div>
+            <div className="text-2xl font-mono font-extrabold text-white">
+              {sciCalc.carbon_grams} <span className="text-xs font-normal text-slate-400">g CO2e</span>
+            </div>
+            <p className="text-[11px] text-slate-400 leading-snug">
+              ISO/GSF Specification: Operational Energy + Embodied Hardware Depreciation.
+            </p>
+          </div>
+
+          {/* Model 4: W3C Regional */}
+          <div className="p-5 rounded-2xl bg-[#070d0a] border border-purple-500/40 space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold text-purple-400">🌍 W3C Regional</span>
+              <span className="text-[10px] bg-purple-500/20 text-purple-300 px-2 py-0.5 rounded-full font-mono font-bold">Grade {regionalCalc.grade}</span>
+            </div>
+            <div className="text-2xl font-mono font-extrabold text-white">
+              {regionalCalc.carbon_grams} <span className="text-xs font-normal text-slate-400">g CO2e</span>
+            </div>
+            <p className="text-[11px] text-slate-400 leading-snug">
+              Calculated using {REGIONAL_GRIDS[testRegion].flag} {REGIONAL_GRIDS[testRegion].name} grid emissions.
+            </p>
+          </div>
+        </div>
+      </div>
+
       {/* 4 Pillars of Internet Energy */}
       <div className="glass-panel p-8 rounded-3xl border border-emerald-900/40 space-y-6">
         <h2 className="text-xl font-bold text-white flex items-center gap-2">
@@ -33,49 +167,32 @@ export default function Methodology() {
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="p-4 rounded-2xl bg-slate-900/60 border border-emerald-950 space-y-1.5">
-            <div className="text-xs font-bold text-emerald-400">{t('methodology.p1_title')}</div>
+            <div className="text-xs font-bold text-emerald-400">{t('methodology.p1_title')} (15%)</div>
             <p className="text-xs text-slate-400">
               {t('methodology.p1_desc')}
             </p>
           </div>
 
           <div className="p-4 rounded-2xl bg-slate-900/60 border border-emerald-950 space-y-1.5">
-            <div className="text-xs font-bold text-teal-400">{t('methodology.p2_title')}</div>
+            <div className="text-xs font-bold text-teal-400">{t('methodology.p2_title')} (14%)</div>
             <p className="text-xs text-slate-400">
               {t('methodology.p2_desc')}
             </p>
           </div>
 
           <div className="p-4 rounded-2xl bg-slate-900/60 border border-emerald-950 space-y-1.5">
-            <div className="text-xs font-bold text-green-400">{t('methodology.p3_title')}</div>
+            <div className="text-xs font-bold text-green-400">{t('methodology.p3_title')} (52%)</div>
             <p className="text-xs text-slate-400">
               {t('methodology.p3_desc')}
             </p>
           </div>
 
           <div className="p-4 rounded-2xl bg-slate-900/60 border border-emerald-950 space-y-1.5">
-            <div className="text-xs font-bold text-lime-400">{t('methodology.p4_title')}</div>
+            <div className="text-xs font-bold text-lime-400">{t('methodology.p4_title')} (19%)</div>
             <p className="text-xs text-slate-400">
               {t('methodology.p4_desc')}
             </p>
           </div>
-        </div>
-      </div>
-
-      {/* Calculation Formula */}
-      <div className="glass-panel p-8 rounded-3xl border border-emerald-900/40 space-y-6">
-        <h2 className="text-xl font-bold text-white flex items-center gap-2">
-          <Zap className="w-5 h-5 text-emerald-400" />
-          {t('methodology.formulaTitle')}
-        </h2>
-
-        <div className="p-4 rounded-2xl bg-[#050806] border border-emerald-900/50 font-mono text-xs text-emerald-300 space-y-2">
-          <div>// 1. Energy in Kilowatt-Hours (kWh) per Gigabyte:</div>
-          <div className="text-white">E = Data_Transferred_GB * 0.812 kWh/GB</div>
-          <div className="pt-2">// 2. Carbon Emissions (Grams of CO2e):</div>
-          <div className="text-white">CO2e = E * Carbon_Intensity_Grid (442 gCO2/kWh for standard, 50 gCO2/kWh for green)</div>
-          <div className="pt-2">// 3. Blended Visit Calculation:</div>
-          <div className="text-white">CO2_Visit = (First_Visit_CO2 * 0.75) + (Return_Visit_CO2 * 0.25)</div>
         </div>
       </div>
 
@@ -142,7 +259,7 @@ export default function Methodology() {
       <div className="glass-panel p-6 rounded-3xl border border-emerald-900/40 flex flex-col sm:flex-row items-center justify-between gap-4">
         <div className="space-y-1">
           <h4 className="text-sm font-bold text-white">{t('methodology.officialGuidelines')}</h4>
-          <p className="text-xs text-slate-400">Read the open-source Sustainable Web Design specifications.</p>
+          <p className="text-xs text-slate-400">Read the open-source Sustainable Web Design specifications and ISO standard.</p>
         </div>
         <a
           href="https://sustainablewebdesign.org/guidelines/"
