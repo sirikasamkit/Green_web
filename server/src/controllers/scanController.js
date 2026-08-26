@@ -1,3 +1,4 @@
+const dns = require('dns').promises;
 const crypto = require('crypto');
 const { scanWebsite } = require('../services/scanner');
 const { calculateCarbonMetrics } = require('../services/carbonEngine');
@@ -23,6 +24,18 @@ async function scanUrl(req, res) {
       return res.status(400).json({
         error: `URL ไม่ถูกต้อง: "${cleanUrl}" ขาดนามสกุลโดเมนที่ถูกต้อง (กรุณาระบุเช่น .com, .org, .co.th)`
       });
+    }
+
+    // Extract domain and verify DNS resolution
+    const domain = cleanUrl.replace(/^https?:\/\//i, '').split('/')[0].split(':')[0];
+    if (!domain.includes('localhost') && !domain.includes('127.0.0.1')) {
+      try {
+        await dns.lookup(domain);
+      } catch (dnsErr) {
+        return res.status(400).json({
+          error: `ไม่สามารถเข้าถึงเว็บไซต์ "${domain}" ได้ (DNS Error: NXDOMAIN ไม่พบโดเมนนี้ในโลกอินเทอร์เน็ต)`
+        });
+      }
     }
 
     console.log(`🔍 [SCAN INITIATED] URL: ${cleanUrl} | Device: ${device}`);

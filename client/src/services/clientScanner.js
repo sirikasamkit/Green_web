@@ -345,6 +345,18 @@ export async function runClientSideScan(targetUrl, device = 'desktop') {
 
   const greenHostPromise = checkGreenHosting(domain);
 
+  // 0. Verify domain existence via public DNS-over-HTTPS (DoH)
+  if (!domain.includes('localhost') && !domain.includes('127.0.0.1')) {
+    try {
+      const dnsRes = await axios.get(`https://dns.google/resolve?name=${domain}&type=A`, { timeout: 3500 });
+      if (dnsRes.data && (dnsRes.data.Status === 3 || (!dnsRes.data.Answer && !dnsRes.data.Authority))) {
+        throw new Error(`ไม่สามารถเข้าถึงเว็บไซต์ "${domain}" ได้ (DNS Error: NXDOMAIN ไม่พบโดเมนนี้ในโลกอินเทอร์เน็ต) กรุณาตรวจสอบชื่อเว็บไซต์ใหม่อีกครั้ง`);
+      }
+    } catch (dnsErr) {
+      if (dnsErr.message.includes('NXDOMAIN')) throw dnsErr;
+    }
+  }
+
   let htmlContent = '';
   let loadTimeMs = 500;
   let pageTitle = domain;
