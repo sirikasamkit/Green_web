@@ -289,7 +289,7 @@ export default function Compare() {
         {/* Quick Benchmark Comparison Shortcuts */}
         <div className="pt-2 border-t border-emerald-950/60 flex flex-wrap items-center gap-2 text-xs">
           <span className="text-slate-400 flex items-center gap-1 text-[11px]">
-            <Sparkles className="w-3.5 h-3.5 text-emerald-400" /> Quick Benchmarks:
+            <Sparkles className="w-3.5 h-3.5 text-emerald-400" /> {t('compare.quickBenchmarks', 'Quick Benchmarks:')}
           </span>
           <button
             type="button"
@@ -307,19 +307,19 @@ export default function Compare() {
           </button>
           <button
             type="button"
-            onClick={() => loadPresetPair(['preset_wiki', 'preset_greenpeace', 'preset_stripe', 'preset_apple'])}
-            className="px-2.5 py-1 rounded-lg bg-[#070d0a] border border-emerald-900/40 text-[11px] text-slate-300 hover:text-emerald-300 hover:border-emerald-500/40"
+            onClick={() => setSelectedIds(['preset_wiki', 'preset_greenpeace', 'preset_stripe', 'preset_apple'])}
+            className="px-2.5 py-1 rounded-lg bg-emerald-950/80 border border-emerald-500/30 text-[11px] text-emerald-300 hover:bg-emerald-500/20 ml-auto"
           >
-            Compare All 4 Global Sites
+            ⚡ {t('compare.compareAll', 'Compare All 4 Global Sites')}
           </button>
         </div>
       </div>
 
       {/* Comparison Matrix */}
       {loading ? (
-        <div className="py-20 text-center space-y-3">
-          <Loader2 className="w-8 h-8 animate-spin text-emerald-400 mx-auto" />
-          <p className="text-xs text-slate-400">Calculating comparison...</p>
+        <div className="py-12 text-center text-slate-400 flex items-center justify-center space-x-2">
+          <Loader2 className="w-5 h-5 animate-spin text-emerald-400" />
+          <span>{t('compare.calculating', 'Calculating comparison...')}</span>
         </div>
       ) : scans.length < 2 ? (
         <div className="glass-panel p-12 rounded-3xl text-center space-y-3">

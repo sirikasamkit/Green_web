@@ -37,10 +37,10 @@ export default function Methodology() {
           <div>
             <h2 className="text-xl font-bold text-white flex items-center gap-2">
               <Scale className="w-5 h-5 text-emerald-400" />
-              Interactive Multi-Model Comparison Simulator
+              {t('methodology.simulatorTitle', 'Interactive Multi-Model Comparison Simulator')}
             </h2>
             <p className="text-xs text-slate-400 mt-1">
-              Compare how the world's 4 recognized sustainability algorithms compute carbon emissions for the exact same webpage
+              {t('methodology.simulatorSubtitle', 'Compare how the world\'s 4 recognized sustainability algorithms compute carbon emissions for the exact same webpage')}
             </p>
           </div>
 
@@ -53,7 +53,7 @@ export default function Methodology() {
               }`}
             >
               <Leaf className="w-3.5 h-3.5" />
-              <span>{isGreen ? '100% Green Host' : 'Standard Grid Host'}</span>
+              <span>{isGreen ? t('methodology.greenHostToggle', '100% Green Host') : t('methodology.standardGridToggle', 'Standard Grid Host')}</span>
             </button>
           </div>
         </div>
@@ -62,7 +62,7 @@ export default function Methodology() {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="p-4 rounded-2xl bg-slate-900/60 border border-emerald-950 space-y-2">
             <div className="flex justify-between text-xs">
-              <span className="text-slate-300 font-semibold">Simulated Page Weight</span>
+              <span className="text-slate-300 font-semibold">{t('methodology.pageWeight', 'Simulated Page Weight')}</span>
               <span className="font-mono text-emerald-400 font-bold">{sampleMb.toFixed(2)} MB</span>
             </div>
             <input
@@ -78,7 +78,7 @@ export default function Methodology() {
 
           <div className="p-4 rounded-2xl bg-slate-900/60 border border-emerald-950 space-y-2">
             <div className="flex justify-between text-xs">
-              <span className="text-slate-300 font-semibold">W3C Regional Power Grid</span>
+              <span className="text-slate-300 font-semibold">{t('methodology.regionalGridTitle', 'W3C Regional Power Grid')}</span>
               <span className="font-mono text-purple-400 font-bold">{REGIONAL_GRIDS[testRegion].intensity} gCO2/kWh</span>
             </div>
             <select

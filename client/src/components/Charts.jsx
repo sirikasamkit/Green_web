@@ -24,16 +24,6 @@ const COLORS = {
   other: '#64748b',      // Slate
 };
 
-const LABELS = {
-  images: 'Images',
-  javascript: 'JavaScript',
-  css: 'CSS Stylesheets',
-  fonts: 'Web Fonts',
-  html: 'HTML Document',
-  media: 'Video / Audio',
-  other: 'Other Assets',
-};
-
 function formatBytes(bytes) {
   if (!bytes || bytes === 0) return '0 KB';
   const k = 1024;
@@ -47,10 +37,14 @@ function formatBytes(bytes) {
 export function ResourceBreakdownChart({ breakdown = {}, totalBytes = 0 }) {
   const { t } = useLanguage();
 
+  const getLabel = (key) => {
+    return t(`charts.resourceLabels.${key}`, key);
+  };
+
   const chartData = Object.keys(breakdown)
     .filter((key) => breakdown[key]?.bytes > 0)
     .map((key) => ({
-      name: LABELS[key] || key,
+      name: getLabel(key),
       key,
       bytes: breakdown[key].bytes,
       count: breakdown[key].count || 0,
@@ -69,10 +63,10 @@ export function ResourceBreakdownChart({ breakdown = {}, totalBytes = 0 }) {
             <span>{data.name}</span>
           </div>
           <div className="text-slate-300">
-            Size: <strong className="text-emerald-400 font-mono">{formatBytes(data.bytes)}</strong> ({data.percentage}%)
+            {t('charts.size', 'Size:')} <strong className="text-emerald-400 font-mono">{formatBytes(data.bytes)}</strong> ({data.percentage}%)
           </div>
           <div className="text-slate-400">
-            Requests: <strong className="text-white">{data.count}</strong>
+            {t('charts.requests', 'Requests:')} <strong className="text-white">{data.count}</strong>
           </div>
         </div>
       );
@@ -117,7 +111,7 @@ export function ResourceBreakdownChart({ breakdown = {}, totalBytes = 0 }) {
           </ResponsiveContainer>
         ) : (
           <div className="flex items-center justify-center h-full text-xs text-slate-500">
-            No resource data recorded
+            {t('charts.noData', 'No resource data recorded')}
           </div>
         )}
       </div>
@@ -145,10 +139,10 @@ export function CarbonBenchmarkChart({ currentGrams = 0, domain = 'Current Site'
   const { t } = useLanguage();
 
   const benchmarkData = [
-    { name: 'Eco Target (A+)', grams: 0.095, fill: '#10b981' },
+    { name: t('charts.ecoTarget', 'Eco Target (A+)'), grams: 0.095, fill: '#10b981' },
     { name: domain.length > 15 ? `${domain.slice(0, 12)}...` : domain, grams: currentGrams, fill: currentGrams <= 0.34 ? '#22c55e' : '#f59e0b' },
-    { name: 'Global Average', grams: 0.500, fill: '#64748b' },
-    { name: 'Heavy Website', grams: 1.250, fill: '#ef4444' },
+    { name: t('charts.globalAverage', 'Global Average'), grams: 0.500, fill: '#64748b' },
+    { name: t('charts.heavyWebsite', 'Heavy Website'), grams: 1.250, fill: '#ef4444' },
   ];
 
   return (
@@ -168,7 +162,7 @@ export function CarbonBenchmarkChart({ currentGrams = 0, domain = 'Current Site'
             <XAxis dataKey="name" stroke="#94a3b8" tick={{ fill: '#94a3b8', fontSize: 11 }} />
             <YAxis stroke="#94a3b8" tick={{ fill: '#94a3b8', fontSize: 11 }} />
             <Tooltip
-              formatter={(val) => [`${val} g CO2e`, 'Emissions']}
+              formatter={(val) => [`${val} g CO2e`, t('charts.emissions', 'Emissions')]}
               contentStyle={{ backgroundColor: '#0f1712', borderColor: '#22c55e', borderRadius: '12px', fontSize: '12px' }}
             />
             <Bar dataKey="grams" radius={[6, 6, 0, 0]}>

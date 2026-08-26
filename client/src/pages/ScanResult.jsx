@@ -233,12 +233,12 @@ export default function ScanResult() {
           <div className="flex items-center space-x-2">
             <Scale className="w-4 h-4 text-emerald-400" />
             <span className="text-xs font-bold text-white uppercase tracking-wider">
-              Calculation Model / เลือกระบบสูตรคำนวณ:
+              {t('models.title', 'Calculation Model:')}
             </span>
           </div>
           {calculationModel === 'regional' && (
             <div className="flex items-center space-x-2">
-              <span className="text-[11px] text-slate-400">Target Region:</span>
+              <span className="text-[11px] text-slate-400">{t('models.targetRegion', 'Target Region:')}</span>
               <select
                 value={selectedRegion}
                 onChange={(e) => setSelectedRegion(e.target.value)}
@@ -268,7 +268,7 @@ export default function ScanResult() {
               <span>🌿 SWD v4</span>
               {calculationModel === 'swd' && <span className="text-[9px] bg-emerald-500 text-black px-1.5 py-0.2 rounded-full font-mono">ACTIVE</span>}
             </div>
-            <div className="text-[10px] text-slate-400 mt-0.5">Sustainable Web Design (0.812 kWh/GB)</div>
+            <div className="text-[10px] text-slate-400 mt-0.5">{t('models.swdDesc', 'Sustainable Web Design (0.812 kWh/GB)')}</div>
           </button>
 
           <button
@@ -284,7 +284,7 @@ export default function ScanResult() {
               <span>⚡ OneByte</span>
               {calculationModel === 'onebyte' && <span className="text-[9px] bg-yellow-500 text-black px-1.5 py-0.2 rounded-full font-mono">ACTIVE</span>}
             </div>
-            <div className="text-[10px] text-slate-400 mt-0.5">The Shift Project (0.06 kWh/GB Network)</div>
+            <div className="text-[10px] text-slate-400 mt-0.5">{t('models.onebyteDesc', 'The Shift Project (0.06 kWh/GB Network)')}</div>
           </button>
 
           <button
@@ -292,15 +292,15 @@ export default function ScanResult() {
             onClick={() => setCalculationModel('sci')}
             className={`p-3 rounded-2xl text-left border transition-all ${
               calculationModel === 'sci'
-                ? 'bg-cyan-500/20 border-cyan-500 text-white shadow-md'
+                ? 'bg-purple-500/20 border-purple-500 text-white shadow-md'
                 : 'bg-slate-900/60 border-slate-800 text-slate-400 hover:text-white'
             }`}
           >
             <div className="text-xs font-bold flex items-center gap-1.5">
               <span>🏛️ GSF SCI</span>
-              {calculationModel === 'sci' && <span className="text-[9px] bg-cyan-500 text-black px-1.5 py-0.2 rounded-full font-mono">ACTIVE</span>}
+              {calculationModel === 'sci' && <span className="text-[9px] bg-purple-500 text-black px-1.5 py-0.2 rounded-full font-mono">ACTIVE</span>}
             </div>
-            <div className="text-[10px] text-slate-400 mt-0.5">ISO Software Intensity (E × I + M)</div>
+            <div className="text-[10px] text-slate-400 mt-0.5">{t('models.sciDesc', 'ISO Software Intensity (E × I + M)')}</div>
           </button>
 
           <button
@@ -308,15 +308,15 @@ export default function ScanResult() {
             onClick={() => setCalculationModel('regional')}
             className={`p-3 rounded-2xl text-left border transition-all ${
               calculationModel === 'regional'
-                ? 'bg-purple-500/20 border-purple-500 text-white shadow-md'
+                ? 'bg-blue-500/20 border-blue-500 text-white shadow-md'
                 : 'bg-slate-900/60 border-slate-800 text-slate-400 hover:text-white'
             }`}
           >
             <div className="text-xs font-bold flex items-center gap-1.5">
               <span>🌍 W3C Regional</span>
-              {calculationModel === 'regional' && <span className="text-[9px] bg-purple-500 text-black px-1.5 py-0.2 rounded-full font-mono">ACTIVE</span>}
+              {calculationModel === 'regional' && <span className="text-[9px] bg-blue-500 text-black px-1.5 py-0.2 rounded-full font-mono">ACTIVE</span>}
             </div>
-            <div className="text-[10px] text-slate-400 mt-0.5">Country-Specific Power Grid</div>
+            <div className="text-[10px] text-slate-400 mt-0.5">{t('models.regionalDesc', 'Country-Specific Power Grid')}</div>
           </button>
         </div>
       </div>
