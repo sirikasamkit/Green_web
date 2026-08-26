@@ -31,10 +31,13 @@ export const scanApi = {
         return response.data;
       }
     } catch (err) {
-      console.warn('⚠️ Server scan timed out or unreachable, using client engine:', err.message);
+      if (err.response?.data?.error) {
+        throw new Error(err.response.data.error);
+      }
+      console.warn('⚠️ Server scan timed out or unreachable, trying client engine:', err.message);
     }
 
-    // In-browser engine fallback if backend is sleeping
+    // In-browser engine fallback
     const clientData = await runClientSideScan(url, device);
     return {
       success: true,

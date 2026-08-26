@@ -315,18 +315,7 @@ async function scanWebsite(targetUrl, device = 'desktop') {
           pageTitle = match[1].trim();
         }
       } catch (fbErr) {
-        totalBytes = 220000;
-        totalRequests = 10;
-        resourceBreakdown.html.bytes = 45000;
-        resourceBreakdown.html.count = 1;
-        resourceBreakdown.javascript.bytes = 90000;
-        resourceBreakdown.javascript.count = 3;
-        resourceBreakdown.css.bytes = 35000;
-        resourceBreakdown.css.count = 2;
-        resourceBreakdown.images.bytes = 50000;
-        resourceBreakdown.images.count = 4;
-        loadTimeMs = 950;
-        ttfbMs = 220;
+        throw new Error(`Unable to reach website "${domain}". The domain does not exist or server is unreachable.`);
       }
     }
   } finally {

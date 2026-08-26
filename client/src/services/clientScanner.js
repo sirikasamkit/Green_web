@@ -363,11 +363,16 @@ export async function runClientSideScan(targetUrl, device = 'desktop') {
       loadTimeMs = Date.now() - fetchStart;
       htmlContent = typeof res2.data === 'string' ? res2.data : JSON.stringify(res2.data);
     } catch (e) {
-      loadTimeMs = 650;
+      htmlContent = '';
     }
   }
 
-  let htmlBytes = htmlContent ? new Blob([htmlContent]).size : 35000;
+  // Reject non-existent / unreachable websites
+  if (!htmlContent || htmlContent.length < 50) {
+    throw new Error(`ไม่สามารถเข้าถึงเว็บไซต์ "${domain}" ได้ (DNS Error หรือเว็บไซต์ไม่มีอยู่จริง) กรุณาตรวจสอบ URL อีกครั้ง`);
+  }
+
+  let htmlBytes = new Blob([htmlContent]).size;
   let scriptCount = 6;
   let cssCount = 3;
   let imgCount = 8;
