@@ -104,22 +104,21 @@ export const scanApi = {
     } catch (e) {}
 
     const history = JSON.parse(localStorage.getItem('greenweb_scans') || '[]');
-    const items = history.filter(s => ids.includes(s.id));
-    const winner = items.length > 0
-      ? [...items].sort((a, b) => (a.carbon_grams || 0) - (b.carbon_grams || 0))[0]
-      : null;
+    const matched = history.filter((s) => ids.includes(s.id));
+    const winnerCarbon = [...matched].sort((a, b) => (a.carbon_grams || 0) - (b.carbon_grams || 0))[0];
+    const winnerSpeed = [...matched].sort((a, b) => (a.load_time_ms || 0) - (b.load_time_ms || 0))[0];
+    const winnerSize = [...matched].sort((a, b) => (a.page_size_bytes || 0) - (b.page_size_bytes || 0))[0];
 
     return {
       success: true,
       data: {
-        items,
-        winner,
-        comparison: {
-          totalCompared: items.length,
-          cleanest: winner ? winner.domain : null,
-          carbonDifference: items.length >= 2 ? Math.abs((items[0].carbon_grams || 0) - (items[1].carbon_grams || 0)).toFixed(3) : '0.000'
-        }
-      }
+        scans: matched,
+        highlights: {
+          cleanest: winnerCarbon ? { id: winnerCarbon.id, domain: winnerCarbon.domain, carbon_grams: winnerCarbon.carbon_grams } : null,
+          fastest: winnerSpeed ? { id: winnerSpeed.id, domain: winnerSpeed.domain, load_time_ms: winnerSpeed.load_time_ms } : null,
+          lightest: winnerSize ? { id: winnerSize.id, domain: winnerSize.domain, page_size_bytes: winnerSize.page_size_bytes } : null,
+        },
+      },
     };
   },
 

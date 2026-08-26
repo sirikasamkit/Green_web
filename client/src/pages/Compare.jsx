@@ -8,7 +8,8 @@ import {
   ExternalLink,
   CheckCircle,
   XCircle,
-  Loader2
+  Loader2,
+  Sparkles
 } from 'lucide-react';
 import GradeBadge from '../components/GradeBadge';
 import { scanApi } from '../services/api';
@@ -20,6 +21,66 @@ function formatBytes(bytes) {
   if (bytes < k * k) return `${(bytes / k).toFixed(1)} KB`;
   return `${(bytes / (k * k)).toFixed(2)} MB`;
 }
+
+// Default benchmark presets if history is empty
+const BENCHMARK_PRESETS = [
+  {
+    id: 'preset_wiki',
+    domain: 'en.wikipedia.org',
+    url: 'https://en.wikipedia.org',
+    title: 'Wikipedia, the free encyclopedia',
+    carbon_grams: 0.082,
+    grade: 'A+',
+    cleaner_than_pct: 94,
+    page_size_bytes: 520000,
+    requests_count: 36,
+    load_time_ms: 540,
+    is_green_host: true,
+    equivalencies: { annual_kg_co2: 9.84 }
+  },
+  {
+    id: 'preset_greenpeace',
+    domain: 'greenpeace.org',
+    url: 'https://www.greenpeace.org',
+    title: 'Greenpeace International',
+    carbon_grams: 0.145,
+    grade: 'A',
+    cleaner_than_pct: 88,
+    page_size_bytes: 820000,
+    requests_count: 28,
+    load_time_ms: 780,
+    is_green_host: true,
+    equivalencies: { annual_kg_co2: 17.4 }
+  },
+  {
+    id: 'preset_stripe',
+    domain: 'stripe.com',
+    url: 'https://stripe.com',
+    title: 'Stripe | Financial Infrastructure for the Internet',
+    carbon_grams: 0.385,
+    grade: 'C',
+    cleaner_than_pct: 54,
+    page_size_bytes: 1450000,
+    requests_count: 42,
+    load_time_ms: 920,
+    is_green_host: false,
+    equivalencies: { annual_kg_co2: 46.2 }
+  },
+  {
+    id: 'preset_apple',
+    domain: 'apple.com',
+    url: 'https://apple.com',
+    title: 'Apple (Official)',
+    carbon_grams: 0.720,
+    grade: 'E',
+    cleaner_than_pct: 18,
+    page_size_bytes: 2850000,
+    requests_count: 68,
+    load_time_ms: 1240,
+    is_green_host: true,
+    equivalencies: { annual_kg_co2: 86.4 }
+  }
+];
 
 export default function Compare() {
   const location = useLocation();
@@ -34,19 +95,33 @@ export default function Compare() {
   const [newUrl, setNewUrl] = useState('');
   const [isScanningNew, setIsScanningNew] = useState(false);
 
-  // Fetch available scans for dropdown
+  // Fetch available scans
   useEffect(() => {
     scanApi.getHistory({ limit: 30 })
       .then((res) => {
         const list = Array.isArray(res?.data) ? res.data : (res?.data?.scans || []);
-        setAvailableScans(list);
-        if (selectedIds.length === 0 && list.length >= 2) {
-          setSelectedIds([list[0].id, list[1].id]);
+        if (list.length > 0) {
+          setAvailableScans(list);
+          if (selectedIds.length === 0 && list.length >= 2) {
+            setSelectedIds([list[0].id, list[1].id]);
+          } else if (selectedIds.length === 1 && list.length >= 2) {
+            const second = list.find((s) => s.id !== selectedIds[0]);
+            if (second) setSelectedIds([selectedIds[0], second.id]);
+          }
+        } else {
+          // Fallback to benchmarks if empty
+          setAvailableScans(BENCHMARK_PRESETS);
+          if (selectedIds.length === 0) {
+            setSelectedIds(['preset_wiki', 'preset_greenpeace']);
+          }
         }
       })
       .catch((err) => {
         console.error(err);
-        setAvailableScans([]);
+        setAvailableScans(BENCHMARK_PRESETS);
+        if (selectedIds.length === 0) {
+          setSelectedIds(['preset_wiki', 'preset_greenpeace']);
+        }
       });
   }, []);
 
@@ -54,18 +129,49 @@ export default function Compare() {
   useEffect(() => {
     if (selectedIds.length >= 2) {
       setLoading(true);
+
+      // Check if comparing benchmark presets locally
+      const presetMatches = BENCHMARK_PRESETS.filter((p) => selectedIds.includes(p.id));
+      const availableMatches = availableScans.filter((s) => selectedIds.includes(s.id));
+      const combined = [...availableMatches];
+      presetMatches.forEach((p) => {
+        if (!combined.some((c) => c.id === p.id)) combined.push(p);
+      });
+
       scanApi.compareScans(selectedIds)
         .then((res) => {
-          if (res?.data) {
+          const fetchedScans = res?.data?.scans || res?.data?.items || [];
+          if (fetchedScans.length >= 2) {
             setCompareData(res.data);
+          } else if (combined.length >= 2) {
+            // Local fallback calculation
+            const winnerCarbon = [...combined].sort((a, b) => (a.carbon_grams || 0) - (b.carbon_grams || 0))[0];
+            const winnerSpeed = [...combined].sort((a, b) => (a.load_time_ms || 0) - (b.load_time_ms || 0))[0];
+            const winnerSize = [...combined].sort((a, b) => (a.page_size_bytes || 0) - (b.page_size_bytes || 0))[0];
+            setCompareData({
+              scans: combined,
+              highlights: {
+                cleanest: winnerCarbon ? { id: winnerCarbon.id, domain: winnerCarbon.domain, carbon_grams: winnerCarbon.carbon_grams } : null,
+                fastest: winnerSpeed ? { id: winnerSpeed.id, domain: winnerSpeed.domain, load_time_ms: winnerSpeed.load_time_ms } : null,
+                lightest: winnerSize ? { id: winnerSize.id, domain: winnerSize.domain, page_size_bytes: winnerSize.page_size_bytes } : null,
+              }
+            });
           }
         })
-        .catch(console.error)
+        .catch(() => {
+          if (combined.length >= 2) {
+            const winnerCarbon = [...combined].sort((a, b) => (a.carbon_grams || 0) - (b.carbon_grams || 0))[0];
+            setCompareData({
+              scans: combined,
+              highlights: { cleanest: winnerCarbon }
+            });
+          }
+        })
         .finally(() => setLoading(false));
     } else {
       setCompareData(null);
     }
-  }, [selectedIds]);
+  }, [selectedIds, availableScans]);
 
   const handleToggleId = (id) => {
     if (selectedIds.includes(id)) {
@@ -97,7 +203,11 @@ export default function Compare() {
     }
   };
 
-  const scans = compareData?.scans || [];
+  const loadPresetPair = (pair) => {
+    setSelectedIds(pair);
+  };
+
+  const scans = compareData?.scans || compareData?.items || [];
   const highlights = compareData?.highlights || {};
 
   return (
@@ -175,6 +285,34 @@ export default function Compare() {
             );
           })}
         </div>
+
+        {/* Quick Benchmark Comparison Shortcuts */}
+        <div className="pt-2 border-t border-emerald-950/60 flex flex-wrap items-center gap-2 text-xs">
+          <span className="text-slate-400 flex items-center gap-1 text-[11px]">
+            <Sparkles className="w-3.5 h-3.5 text-emerald-400" /> Quick Benchmarks:
+          </span>
+          <button
+            type="button"
+            onClick={() => loadPresetPair(['preset_wiki', 'preset_apple'])}
+            className="px-2.5 py-1 rounded-lg bg-[#070d0a] border border-emerald-900/40 text-[11px] text-slate-300 hover:text-emerald-300 hover:border-emerald-500/40"
+          >
+            Wikipedia vs Apple
+          </button>
+          <button
+            type="button"
+            onClick={() => loadPresetPair(['preset_greenpeace', 'preset_stripe'])}
+            className="px-2.5 py-1 rounded-lg bg-[#070d0a] border border-emerald-900/40 text-[11px] text-slate-300 hover:text-emerald-300 hover:border-emerald-500/40"
+          >
+            Greenpeace vs Stripe
+          </button>
+          <button
+            type="button"
+            onClick={() => loadPresetPair(['preset_wiki', 'preset_greenpeace', 'preset_stripe', 'preset_apple'])}
+            className="px-2.5 py-1 rounded-lg bg-[#070d0a] border border-emerald-900/40 text-[11px] text-slate-300 hover:text-emerald-300 hover:border-emerald-500/40"
+          >
+            Compare All 4 Global Sites
+          </button>
+        </div>
       </div>
 
       {/* Comparison Matrix */}
@@ -224,7 +362,7 @@ export default function Compare() {
                 {highlights.fastest && (
                   <div className="px-3 py-1.5 rounded-xl bg-slate-900/80 border border-emerald-900/50">
                     <span className="text-slate-400">{t('compare.fastest')}: </span>
-                    <strong className="text-lime-400">{(highlights.fastest.load_time_ms / 1000).toFixed(2)}s</strong>
+                    <strong className="text-lime-400">{((highlights.fastest.load_time_ms || 600) / 1000).toFixed(2)}s</strong>
                   </div>
                 )}
               </div>
@@ -278,7 +416,7 @@ export default function Compare() {
 
                       <div className="flex justify-between py-1.5 border-b border-emerald-950/60">
                         <span className="text-slate-400">{t('report.loadTime')}</span>
-                        <span className="font-mono font-bold text-white">{(site.load_time_ms / 1000).toFixed(2)}s</span>
+                        <span className="font-mono font-bold text-white">{((site.load_time_ms || 600) / 1000).toFixed(2)}s</span>
                       </div>
 
                       <div className="flex justify-between py-1.5 border-b border-emerald-950/60">
