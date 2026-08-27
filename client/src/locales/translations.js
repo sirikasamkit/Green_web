@@ -148,6 +148,44 @@ export const translations = {
       copied: 'คัดลอกแล้ว!',
       co2Reduction: 'ลด CO2 ได้ประมาณ',
     },
+    recs: {
+      green_hosting: {
+        category: 'โฮสติ้งและโครงสร้างพื้นฐาน',
+        title: 'ย้ายเซิร์ฟเวอร์ไปใช้ Green Web Hosting (พลังงานหมุนเวียน 100%)',
+        desc: 'โฮสติ้งปัจจุบันยังไม่ได้รับการรับรองว่าใช้พลังงานหมุนเวียน 100% จาก The Green Web Foundation การเปลี่ยนไปใช้โฮสต์ที่เป็นมิตรต่อสิ่งแวดล้อมจะช่วยลด Carbon Footprint ทันที 9-15%',
+        suggestion: 'เลือกใช้ผู้ให้บริการคลาวด์ที่ใช้พลังงานหมุนเวียน เช่น Google Cloud Platform, Hetzner, Cloudflare หรือ Kinsta',
+      },
+      image_optimization: {
+        category: 'รูปภาพและสื่อดิจิทัล',
+        title: 'บีบอัดรูปภาพและแปลงเป็น Next-Gen Formats (WebP / AVIF)',
+        desc: 'รูปภาพมักเป็นสาเหตุหลักที่ทำให้หน้าเว็บมีขนาดใหญ่ การแปลงเป็น WebP/AVIF และกำหนดขนาด Responsive Images สามารถลดขนาดลงได้ 40-70%',
+        suggestion: 'ใช้ <picture> tag หรือฟอร์แมต WebP พร้อมตั้งค่า loading="lazy" ให้กับรูปภาพใต้ขอบจอ',
+      },
+      javascript_bloat: {
+        category: 'โค้ดและสคริปต์',
+        title: 'ลดขนาด JavaScript Bundle และแยก Code Splitting',
+        desc: 'JavaScript นอกจากต้องดาวน์โหลดแล้ว ยังกินพลังงาน CPU ของผู้ใช้ในการประมวลผล การลด Bundle ช่วยประหยัดแบตเตอรี่และพลังงานอุปกรณ์อย่างมาก',
+        suggestion: 'ทำ Dynamic Import (React.lazy / import()), ลบ Library ที่ไม่ได้ใช้ และโหลดสคริปต์บุคคลที่สามแบบ defer/async',
+      },
+      cache_control: {
+        category: 'เครือข่ายและแคชชิ่ง',
+        title: 'ตั้งค่า Cache-Control สำหรับ Static Assets ให้มีอายุยาวนาน',
+        desc: 'เมื่อผู้ใช้เข้าชมซ้ำ (Return Visits) บราวเซอร์ไม่ต้องดาวน์โหลดไฟล์ใหม่ซ้ำซ้อน ช่วยลดปริมาณคาร์บอนลงได้มากกว่า 50% สำหรับผู้ใช้ประจำ',
+        suggestion: 'กำหนด Cache-Control: public, max-age=31536000, immutable สำหรับไฟล์รูปภาพ ฟอนต์ และ JS/CSS',
+      },
+      dark_mode_eco: {
+        category: 'การออกแบบและประสบการณ์ผู้ใช้',
+        title: 'รองรับ Dark Mode เพื่อประหยัดพลังงานหน้าจอ OLED / AMOLED',
+        desc: 'หน้าจอสมาร์ทโฟนและแล็ปท็อป OLED พิกเซลสีดำและสีเข้มจะใช้พลังงานไฟฟ้าน้อยกว่าสีขาวสว่างมาก (ประหยัดพลังงานจอได้ถึง 30-40%)',
+        suggestion: 'ใช้ CSS Media Query @media (prefers-color-scheme: dark) เพื่อปรับโทนสีพื้นหลังให้เป็นโทนเข้ม',
+      },
+      font_subsetting: {
+        category: 'ตัวอักษรและฟอนต์',
+        title: 'ลดขนาดฟอนต์ด้วย Font Subsetting และใช้ฟอร์แมต WOFF2',
+        desc: 'การตัดตัวอักษรภาษาที่ไม่จำเป็นออกและใช้การบีบอัด WOFF2 ช่วยลดขนาดไฟล์ฟอนต์ลงได้ถึง 60-80%',
+        suggestion: 'ใช้ฟอนต์ WOFF2 ร่วมกับคำสั่ง font-display: swap ใน CSS',
+      },
+    },
     history: {
       title: 'ประวัติและบันทึกการสแกน',
       subtitle: 'ค้นหา กรอง และเลือกเปรียบเทียบเว็บไซต์ที่เคยผ่านการตรวจสอบ',
@@ -415,6 +453,44 @@ export const translations = {
       copyCode: 'Copy Snippet',
       copied: 'Copied!',
       co2Reduction: 'Potential Reduction:',
+    },
+    recs: {
+      green_hosting: {
+        category: 'Hosting & Infrastructure',
+        title: 'Switch to a Certified Green Web Hosting Provider',
+        desc: 'Current server is not certified as running on 100% renewable energy by The Green Web Foundation. Migrating to a green host instantly slashes emissions by 9-15%.',
+        suggestion: 'Choose verified eco-friendly cloud providers such as Google Cloud Platform, Hetzner, Cloudflare, or Kinsta.',
+      },
+      image_optimization: {
+        category: 'Media & Assets',
+        title: 'Convert Images to Modern WebP / AVIF Format',
+        desc: 'Images are typically the largest contributor to page weight. Converting assets to WebP/AVIF and serving responsive sizes reduces data payload by 40-70%.',
+        suggestion: 'Use <picture> tags or Next-Gen WebP formats with loading="lazy" for all below-the-fold images.',
+      },
+      javascript_bloat: {
+        category: 'Code & Scripts',
+        title: 'Reduce JavaScript Payload & Implement Code Splitting',
+        desc: 'JavaScript requires both network data transfer and heavy client CPU execution power. Trimming monolithic bundles significantly cuts device energy usage.',
+        suggestion: 'Implement dynamic code splitting (React.lazy / import()), eliminate unused dependencies, and defer third-party scripts.',
+      },
+      cache_control: {
+        category: 'Network & Caching',
+        title: 'Configure Long-term Cache-Control Headers for Static Assets',
+        desc: 'Leveraging immutable caching prevents repeat visitors from re-downloading static assets, reducing emissions on return visits by over 50%.',
+        suggestion: 'Add Cache-Control: public, max-age=31536000, immutable headers to all versioned static assets, fonts, and images.',
+      },
+      dark_mode_eco: {
+        category: 'Design & UX',
+        title: 'Support Dark Mode to Save OLED Display Energy',
+        desc: 'OLED and AMOLED mobile and laptop displays turn off individual pixels for dark colors, conserving up to 30-40% device battery power.',
+        suggestion: 'Implement @media (prefers-color-scheme: dark) styling to provide a battery-friendly dark theme.',
+      },
+      font_subsetting: {
+        category: 'Fonts & Typography',
+        title: 'Optimize Web Fonts via Subsetting & Modern WOFF2 Format',
+        desc: 'Stripping unused language glyphs and adopting modern WOFF2 compression reduces font payload size by 60-80%.',
+        suggestion: 'Serve WOFF2 fonts with font-display: swap in stylesheet directives.',
+      },
     },
     history: {
       title: 'Audit Logs & Scan History',

@@ -30,11 +30,17 @@ export default function RecCard({ recommendation }) {
     }
   };
 
-  // Select appropriate fields according to current language
-  const displayTitle = language === 'th' ? recommendation.title : (recommendation.title_en || recommendation.title);
-  const displayDesc = language === 'th' ? recommendation.description : (recommendation.description_en || recommendation.description);
-  const displaySuggestion = language === 'th' ? recommendation.suggestion : (recommendation.suggestion_en || recommendation.suggestion);
-  const displayCategory = language === 'th' ? (recommendation.category_th || recommendation.category) : (recommendation.category || recommendation.category_th);
+  // Select appropriate fields dynamically using translation dictionary or fallback
+  const recId = recommendation.id || '';
+  const transTitle = recId && t(`recs.${recId}.title`);
+  const transDesc = recId && t(`recs.${recId}.desc`);
+  const transSuggestion = recId && t(`recs.${recId}.suggestion`);
+  const transCategory = recId && t(`recs.${recId}.category`);
+
+  const displayTitle = (transTitle && transTitle !== `recs.${recId}.title`) ? transTitle : (language === 'th' ? recommendation.title : (recommendation.title_en || recommendation.title));
+  const displayDesc = (transDesc && transDesc !== `recs.${recId}.desc`) ? transDesc : (language === 'th' ? recommendation.description : (recommendation.description_en || recommendation.description));
+  const displaySuggestion = (transSuggestion && transSuggestion !== `recs.${recId}.suggestion`) ? transSuggestion : (language === 'th' ? recommendation.suggestion : (recommendation.suggestion_en || recommendation.suggestion));
+  const displayCategory = (transCategory && transCategory !== `recs.${recId}.category`) ? transCategory : (language === 'th' ? (recommendation.category_th || recommendation.category) : (recommendation.category || recommendation.category_th));
 
   const impactLabel = recommendation.impact === 'HIGH' ? t('report.filterHigh') : recommendation.impact === 'MEDIUM' ? t('report.filterMedium') : t('report.filterLow');
 
