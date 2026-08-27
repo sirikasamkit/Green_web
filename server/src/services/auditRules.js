@@ -27,12 +27,15 @@ function generateAuditRecommendations(scanData) {
     recommendations.push({
       id: 'green_hosting',
       category: 'Hosting & Infrastructure',
+      category_th: 'โฮสติ้งและโครงสร้างพื้นฐาน',
       title: 'ย้ายเซิร์ฟเวอร์ไปใช้ Green Web Hosting (พลังงานหมุนเวียน 100%)',
       title_en: 'Switch to a Certified Green Web Hosting Provider',
       impact: 'HIGH',
       co2_savings_pct: 15,
       description: 'โฮสติ้งปัจจุบันยังไม่ได้รับการรับรองว่าใช้พลังงานหมุนเวียน 100% จาก The Green Web Foundation การเปลี่ยนไปใช้โฮสต์ที่เป็นมิตรต่อสิ่งแวดล้อมจะช่วยลด Carbon Footprint ทันที 9-15%',
+      description_en: 'Current server is not certified as running on 100% renewable energy by The Green Web Foundation. Migrating to a green host instantly slashes emissions by 9-15%.',
       suggestion: 'เลือกใช้ผู้ให้บริการคลาวด์ที่ใช้พลังงานหมุนเวียน เช่น Google Cloud Platform, AWS (เฉพาะภูมิภาค Green), Hetzner, หรือ Kinsta/Cloudflare',
+      suggestion_en: 'Choose verified eco-friendly cloud providers such as Google Cloud Platform, Hetzner, Cloudflare, or Kinsta.',
       codeSnippet: `// Example: Check your host at The Green Web Foundation directory
 // https://www.thegreenwebfoundation.org/directory/`
     });
@@ -44,12 +47,15 @@ function generateAuditRecommendations(scanData) {
     recommendations.push({
       id: 'image_optimization',
       category: 'Assets & Media',
+      category_th: 'รูปภาพและสื่อดิจิทัล',
       title: `บีบอัดรูปภาพและแปลงเป็น Next-Gen Formats (WebP / AVIF) (ปัจจุบัน: ${imgMb} MB)`,
-      title_en: `Optimize and Convert Images to WebP/AVIF (${imgMb} MB detected)`,
+      title_en: `Convert Images to Modern WebP / AVIF Format (${imgMb} MB)`,
       impact: imagesBytes > 1.5 * 1024 * 1024 ? 'HIGH' : 'MEDIUM',
       co2_savings_pct: Math.min(35, Math.round((imagesBytes / pageSizeBytes) * 45)),
       description: 'รูปภาพมีสัดส่วนขนาดไฟล์ที่สูง การบีบอัดแบบ Lossless/Lossy และเปลี่ยนเป็น AVIF หรือ WebP จะช่วยลดขนาดไฟล์ภาพลงได้ถึง 40-70%',
+      description_en: 'Images are typically the largest contributor to page weight. Converting assets to WebP/AVIF and serving responsive sizes reduces data payload by 40-70%.',
       suggestion: 'ใช้ <picture> tag ร่วมกับ AVIF/WebP, เปิดใช้งาน Lazy loading (`loading="lazy"`), และใช้เครื่องมือเช่น Sharp, Squoosh หรือ CDN Image Resizing',
+      suggestion_en: 'Use <picture> tags or Next-Gen WebP formats with loading="lazy" for all below-the-fold images.',
       codeSnippet: `<picture>
   <source srcset="hero.avif" type="image/avif">
   <source srcset="hero.webp" type="image/webp">
@@ -64,12 +70,15 @@ function generateAuditRecommendations(scanData) {
     recommendations.push({
       id: 'javascript_bloat',
       category: 'Code & Scripts',
+      category_th: 'โค้ดและสคริปต์',
       title: `ลดขนาด JavaScript Bundle และแยก Code Splitting (ปัจจุบัน: ${jsMb} MB)`,
       title_en: `Reduce JavaScript Payload & Implement Code Splitting (${jsMb} MB)`,
       impact: jsBytes > 1024 * 1024 ? 'HIGH' : 'MEDIUM',
       co2_savings_pct: Math.min(25, Math.round((jsBytes / pageSizeBytes) * 35)),
       description: 'JavaScript นอกจากต้องดาวน์โหลดแล้ว ยังกินพลังงาน CPU ของผู้ใช้ในการ Parse และ Execute อย่างมาก การลด Bundle ช่วยประหยัดแบตเตอรี่และพลังงานประมวลผล',
+      description_en: 'JavaScript requires both network data transfer and heavy client CPU execution power. Trimming monolithic bundles significantly cuts device energy usage.',
       suggestion: 'ทำ Dynamic Import (React.lazy / import()), ลบ Library ที่ไม่ได้ใช้ด้วย Tree-shaking, และย้าย Analytics Scripts ไปโหลดแบบ defer/async',
+      suggestion_en: 'Implement dynamic code splitting (React.lazy / import()), eliminate unused dependencies, and defer third-party scripts.',
       codeSnippet: `// Example: Lazy load heavy components
 import { lazy, Suspense } from 'react';
 const HeavyChart = lazy(() => import('./HeavyChart'));
@@ -89,12 +98,15 @@ function Dashboard() {
     recommendations.push({
       id: 'cache_control',
       category: 'Network & Caching',
+      category_th: 'เครือข่ายและแคชชิ่ง',
       title: 'ตั้งค่า Cache-Control สำหรับ Static Assets ให้มีอายุยาวนาน',
       title_en: 'Configure Long-term Cache-Control Headers for Static Assets',
       impact: 'HIGH',
       co2_savings_pct: 20,
       description: 'เมื่อผู้ใช้เข้าชมซ้ำ (Return Visits) บราวเซอร์ไม่ต้องดาวน์โหลดไฟล์ใหม่ซ้ำซ้อน ช่วยลดปริมาณคาร์บอนลงได้มากกว่า 50% สำหรับผู้ใช้ประจำ',
+      description_en: 'Leveraging immutable caching prevents repeat visitors from re-downloading static assets, reducing emissions on return visits by over 50%.',
       suggestion: 'กำหนด `Cache-Control: public, max-age=31536000, immutable` สำหรับไฟล์รูปภาพ, ฟอนต์, JS/CSS ที่มี content hash',
+      suggestion_en: 'Add `Cache-Control: public, max-age=31536000, immutable` headers to all versioned static assets, fonts, and images.',
       codeSnippet: `# Nginx Configuration Example
 location ~* \\.(js|css|png|jpg|jpeg|gif|ico|svg|woff2|avif|webp)$ {
     expires 1y;

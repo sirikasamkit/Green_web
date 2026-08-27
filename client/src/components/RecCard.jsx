@@ -30,8 +30,11 @@ export default function RecCard({ recommendation }) {
     }
   };
 
-  // Select appropriate title according to current language
-  const displayTitle = (language === 'th' ? recommendation.title : (recommendation.title_en || recommendation.title));
+  // Select appropriate fields according to current language
+  const displayTitle = language === 'th' ? recommendation.title : (recommendation.title_en || recommendation.title);
+  const displayDesc = language === 'th' ? recommendation.description : (recommendation.description_en || recommendation.description);
+  const displaySuggestion = language === 'th' ? recommendation.suggestion : (recommendation.suggestion_en || recommendation.suggestion);
+  const displayCategory = language === 'th' ? (recommendation.category_th || recommendation.category) : (recommendation.category || recommendation.category_th);
 
   const impactLabel = recommendation.impact === 'HIGH' ? t('report.filterHigh') : recommendation.impact === 'MEDIUM' ? t('report.filterMedium') : t('report.filterLow');
 
@@ -50,7 +53,7 @@ export default function RecCard({ recommendation }) {
             </span>
             {/* Category */}
             <span className="text-[11px] font-semibold text-slate-400">
-              {recommendation.category}
+              {displayCategory}
             </span>
             {/* Savings percentage */}
             {recommendation.co2_savings_pct && (
@@ -65,7 +68,7 @@ export default function RecCard({ recommendation }) {
           </h4>
 
           <p className="text-xs text-slate-400 line-clamp-2">
-            {recommendation.description}
+            {displayDesc}
           </p>
         </div>
 
@@ -84,7 +87,7 @@ export default function RecCard({ recommendation }) {
               <CheckCircle2 className="w-4 h-4 text-emerald-400" />
               {t('report.actionableFix')}
             </strong>
-            {recommendation.suggestion}
+            {displaySuggestion}
           </div>
 
           {/* Code Snippet if available */}

@@ -257,12 +257,15 @@ export function generateAuditRecommendations(scanResult) {
     recs.push({
       id: 'green_hosting',
       category: 'Hosting & Infrastructure',
+      category_th: 'โฮสติ้งและโครงสร้างพื้นฐาน',
       title: 'ย้ายเซิร์ฟเวอร์ไปใช้ Green Web Hosting (พลังงานหมุนเวียน 100%)',
       title_en: 'Switch to a Certified Green Web Hosting Provider',
       impact: 'HIGH',
       co2_savings_pct: 15,
       description: 'โฮสติ้งปัจจุบันยังไม่ได้รับการรับรองว่าใช้พลังงานหมุนเวียน 100% จาก The Green Web Foundation การเปลี่ยนไปใช้โฮสต์ที่เป็นมิตรต่อสิ่งแวดล้อมจะช่วยลด Carbon Footprint ทันที 9-15%',
+      description_en: 'Current server is not certified as running on 100% renewable energy by The Green Web Foundation. Migrating to a green host instantly slashes emissions by 9-15%.',
       suggestion: 'เลือกใช้ผู้ให้บริการคลาวด์ที่ใช้พลังงานหมุนเวียน เช่น Google Cloud Platform, Hetzner, Cloudflare หรือ Kinsta',
+      suggestion_en: 'Choose verified eco-friendly cloud providers such as Google Cloud Platform, Hetzner, Cloudflare, or Kinsta.',
       codeSnippet: '// Check your host at The Green Web Foundation directory\n// https://www.thegreenwebfoundation.org/directory/'
     });
   }
@@ -273,12 +276,15 @@ export function generateAuditRecommendations(scanResult) {
     recs.push({
       id: 'image_optimization',
       category: 'Media & Assets',
+      category_th: 'รูปภาพและสื่อดิจิทัล',
       title: `บีบอัดรูปภาพและแปลงเป็น Next-Gen Formats (WebP / AVIF) (ปัจจุบัน: ${sizeMb} MB)`,
       title_en: `Convert Images to Modern WebP / AVIF Format (${sizeMb} MB)`,
       impact: 'HIGH',
       co2_savings_pct: 35,
       description: 'รูปภาพมักเป็นสาเหตุหลักที่ทำให้หน้าเว็บมีขนาดใหญ่ การแปลงเป็น WebP/AVIF และกำหนดขนาด Responsive Images สามารถลดขนาดลงได้ 40-70%',
+      description_en: 'Images are typically the largest contributor to page weight. Converting assets to WebP/AVIF and serving responsive sizes reduces data payload by 40-70%.',
       suggestion: 'ใช้ <picture> tag หรือฟอร์แมต WebP พร้อมตั้งค่า loading="lazy" ให้กับรูปภาพใต้ขอบจอ',
+      suggestion_en: 'Use <picture> tags or Next-Gen WebP formats with loading="lazy" for all below-the-fold images.',
       codeSnippet: '<picture>\n  <source srcset="hero.avif" type="image/avif" />\n  <source srcset="hero.webp" type="image/webp" />\n  <img src="hero.jpg" alt="Hero" loading="lazy" />\n</picture>'
     });
   }
@@ -289,12 +295,15 @@ export function generateAuditRecommendations(scanResult) {
     recs.push({
       id: 'javascript_bloat',
       category: 'Code & Scripts',
+      category_th: 'โค้ดและสคริปต์',
       title: `ลดขนาด JavaScript Bundle และแยก Code Splitting (ปัจจุบัน: ${sizeMb} MB)`,
       title_en: `Reduce JavaScript Payload & Implement Code Splitting (${sizeMb} MB)`,
       impact: 'HIGH',
       co2_savings_pct: 25,
       description: 'JavaScript นอกจากต้องดาวน์โหลดแล้ว ยังกินพลังงาน CPU ของผู้ใช้ในการประมวลผล การลด Bundle ช่วยประหยัดแบตเตอรี่และพลังงานอุปกรณ์อย่างมาก',
+      description_en: 'JavaScript requires both network data transfer and heavy client CPU execution power. Trimming monolithic bundles significantly cuts device energy usage.',
       suggestion: 'ทำ Dynamic Import (React.lazy / import()), ลบ Library ที่ไม่ได้ใช้ และโหลดสคริปต์บุคคลที่สามแบบ defer/async',
+      suggestion_en: 'Implement dynamic code splitting (React.lazy / import()), eliminate unused dependencies, and defer third-party scripts.',
       codeSnippet: "import { lazy, Suspense } from 'react';\nconst HeavyModule = lazy(() => import('./HeavyModule'));\n\nfunction App() {\n  return (\n    <Suspense fallback={<div>Loading...</div>}>\n      <HeavyModule />\n    </Suspense>\n  );\n}"
     });
   }
@@ -302,24 +311,30 @@ export function generateAuditRecommendations(scanResult) {
   recs.push({
     id: 'cache_control',
     category: 'Network & Caching',
+    category_th: 'เครือข่ายและแคชชิ่ง',
     title: 'ตั้งค่า Cache-Control สำหรับ Static Assets ให้มีอายุยาวนาน',
     title_en: 'Configure Long-term Cache-Control Headers for Static Assets',
     impact: 'HIGH',
     co2_savings_pct: 20,
     description: 'เมื่อผู้ใช้เข้าชมซ้ำ (Return Visits) บราวเซอร์ไม่ต้องดาวน์โหลดไฟล์ใหม่ซ้ำซ้อน ช่วยลดปริมาณคาร์บอนลงได้มากกว่า 50% สำหรับผู้ใช้ประจำ',
+    description_en: 'Leveraging immutable caching prevents repeat visitors from re-downloading static assets, reducing emissions on return visits by over 50%.',
     suggestion: 'กำหนด `Cache-Control: public, max-age=31536000, immutable` สำหรับไฟล์รูปภาพ ฟอนต์ และ JS/CSS',
+    suggestion_en: 'Add `Cache-Control: public, max-age=31536000, immutable` headers to all versioned static assets, fonts, and images.',
     codeSnippet: '# Nginx Configuration Example\nlocation ~* \\.(js|css|png|jpg|jpeg|gif|ico|svg|woff2|webp)$ {\n    expires 1y;\n    add_header Cache-Control "public, max-age=31536000, immutable";\n}'
   });
 
   recs.push({
     id: 'dark_mode_eco',
     category: 'Design & UX',
+    category_th: 'การออกแบบและประสบการณ์ผู้ใช้',
     title: 'รองรับ Dark Mode เพื่อประหยัดพลังงานหน้าจอ OLED / AMOLED',
     title_en: 'Support Dark Mode to Save OLED Display Energy',
     impact: 'LOW',
     co2_savings_pct: 5,
     description: 'หน้าจอสมาร์ทโฟนและแล็ปท็อป OLED พิกเซลสีดำและสีเข้มจะใช้พลังงานไฟฟ้าน้อยกว่าสีขาวสว่างมาก (ประหยัดพลังงานจอได้ถึง 30-40%)',
+    description_en: 'OLED and AMOLED mobile and laptop displays turn off individual pixels for dark colors, conserving up to 30-40% device battery power.',
     suggestion: 'ใช้ CSS Media Query `@media (prefers-color-scheme: dark)` เพื่อปรับโทนสีพื้นหลังให้เป็นโทนเข้ม',
+    suggestion_en: 'Implement `@media (prefers-color-scheme: dark)` styling to provide a battery-friendly dark theme.',
     codeSnippet: '@media (prefers-color-scheme: dark) {\n  body {\n    background-color: #070c09;\n    color: #e2e8f0;\n  }\n}'
   });
 
