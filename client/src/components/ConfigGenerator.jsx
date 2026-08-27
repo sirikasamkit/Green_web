@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Terminal, Copy, Check, Server, Moon, Layers, ShieldCheck } from 'lucide-react';
+import { useLanguage } from '../context/LanguageContext';
 
 const CONFIGS = [
   {
@@ -66,26 +67,43 @@ server {
 </IfModule>`
   },
   {
+    id: 'cloudflare',
+    name: 'Cloudflare Edge Rules',
+    category: 'CDN & Edge',
+    icon: Server,
+    description: 'Cloudflare _headers file for automatic Early Hints, Brotli, and Cache-Control.',
+    code: `# public/_headers (for Cloudflare Pages / Workers)
+/*
+  X-Frame-Options: DENY
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+
+# Static assets immutable caching
+/assets/*
+  Cache-Control: public, max-age=31536000, immutable
+  Access-Control-Allow-Origin: *`
+  },
+  {
     id: 'darkmode',
-    name: 'OLED Battery Saver CSS',
-    category: 'Front-End / UX',
+    name: 'OLED Dark Mode CSS',
+    category: 'Client CSS',
     icon: Moon,
-    description: 'CSS media queries and color tokens that reduce power draw on OLED/AMOLED screens by 30-40%.',
-    code: `/* Eco OLED Power-Saving CSS Variables */
+    description: 'Pure black (#000000) OLED dark mode tokens that shut off smartphone pixels to reduce client device battery drain.',
+    code: `/* Pure Black OLED Energy-Saver Theme */
 :root {
   --bg-primary: #ffffff;
-  --text-primary: #111827;
+  --text-primary: #0f172a;
 }
 
-/* Reduces pixel illumination power on OLED mobile devices */
 @media (prefers-color-scheme: dark) {
   :root {
-    --bg-primary: #080c0a; /* Deep true black saves maximum battery */
-    --bg-card: #111815;
-    --text-primary: #f3f4f6;
-    --accent: #22c55e;
+    /* Pure Black turns off OLED/AMOLED pixels (saves ~30-60% display energy) */
+    --bg-primary: #000000;
+    --bg-surface: #0a0f0d;
+    --text-primary: #f8fafc;
+    --accent: #10b981;
   }
-
+  
   body {
     background-color: var(--bg-primary);
     color: var(--text-primary);
@@ -143,22 +161,21 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-      - run: npm ci
-      - run: npm run build
-      - name: Enforce Maximum 300KB Asset Limit
+      - run: npm ci && npm run build
+      - name: Assert Bundle Weight Limit (< 250KB gzip)
         run: |
-          MAX_SIZE=307200 # 300 KB
-          ACTUAL_SIZE=$(du -sb dist/assets/*.js | awk '{sum+=$1} END {print sum}')
-          if [ $ACTUAL_SIZE -gt $MAX_SIZE ]; then
-            echo "❌ Bundle size ($ACTUAL_SIZE bytes) exceeds the carbon budget!"
+          MAX_SIZE=250000
+          ACTUAL_SIZE=$(gzip -c dist/assets/*.js | wc -c)
+          if [ "$ACTUAL_SIZE" -gt "$MAX_SIZE" ]; then
+            echo "❌ Bundle size $ACTUAL_SIZE exceeded $MAX_SIZE byte limit!"
             exit 1
-          fi
-          echo "✅ Carbon budget passed!"`
+          fi`
   }
 ];
 
 export default function ConfigGenerator() {
-  const [selectedId, setSelectedId] = useState(CONFIGS[0].id);
+  const { t } = useLanguage();
+  const [selectedId, setSelectedId] = useState('nginx');
   const [copied, setCopied] = useState(false);
 
   const activeConfig = CONFIGS.find((c) => c.id === selectedId) || CONFIGS[0];
@@ -175,10 +192,10 @@ export default function ConfigGenerator() {
         <div>
           <h3 className="text-lg font-bold text-white flex items-center gap-2">
             <Terminal className="w-5 h-5 text-emerald-400" />
-            Zero-Carbon Configuration & Snippet Generator
+            {t('optimizer.configTitle', 'Zero-Carbon Configuration & Snippet Generator')}
           </h3>
           <p className="text-xs text-slate-400 mt-0.5">
-            Production-ready server configs, CSS energy savers, and build pipelines to eliminate digital waste
+            {t('optimizer.configSubtitle', 'Production-ready server configs, CSS energy savers, and build pipelines to eliminate digital waste')}
           </p>
         </div>
       </div>
@@ -215,17 +232,17 @@ export default function ConfigGenerator() {
 
           <button
             onClick={handleCopy}
-            className="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-slate-900 border border-emerald-900/50 hover:border-emerald-500/40 text-xs text-slate-200 hover:text-white transition-all"
+            className="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-slate-900 border border-emerald-900/50 hover:border-emerald-500/40 text-xs text-slate-200 hover:text-white transition-all cursor-pointer"
           >
             {copied ? (
               <>
                 <Check className="w-3.5 h-3.5 text-emerald-400" />
-                <span className="text-emerald-400 font-bold">Copied!</span>
+                <span className="text-emerald-400 font-bold">{t('optimizer.copiedConfig', 'Copied!')}</span>
               </>
             ) : (
               <>
                 <Copy className="w-3.5 h-3.5 text-emerald-400" />
-                <span>Copy Snippet</span>
+                <span>{t('optimizer.copyConfig', 'Copy Snippet')}</span>
               </>
             )}
           </button>

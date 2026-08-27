@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Calculator, Target, Zap, ShieldCheck, CheckCircle2, TrendingDown } from 'lucide-react';
+import { useLanguage } from '../context/LanguageContext';
 
 const GRADE_TARGETS = {
   'A+': { grams: 0.095, label: 'Grade A+ (Elite Eco Champion)' },
@@ -9,30 +10,24 @@ const GRADE_TARGETS = {
 };
 
 export default function CarbonBudgetCalculator() {
+  const { t } = useLanguage();
   const [targetGrade, setTargetGrade] = useState('A+');
   const [isGreenHost, setIsGreenHost] = useState(true);
   const [monthlyVisits, setMonthlyVisits] = useState(25000);
 
   const targetGrams = GRADE_TARGETS[targetGrade].grams;
 
-  // Reverse SWD calculation:
-  // CO2e = (FirstVisit * 0.75) + (ReturnVisit * 0.25)
-  // E (kWh) = DataGB * 0.812
-  // CO2e (g) = E * carbonIntensity (50 for green, 442 for standard)
-  // Blended factor: 0.812 * intensity * (0.75 + 0.25*0.25) = 0.812 * intensity * 0.8125
   const intensity = isGreenHost ? 50 : 442;
-  const factorPerGb = 0.812 * intensity * 0.8125; // grams CO2 per GB
+  const factorPerGb = 0.812 * intensity * 0.8125;
   const maxGb = targetGrams / factorPerGb;
   const maxKb = Math.round(maxGb * 1024 * 1024);
   const maxMb = (maxKb / 1024).toFixed(2);
 
-  // Suggested allocation percentages
   const jsBudget = Math.round(maxKb * 0.35);
   const imgBudget = Math.round(maxKb * 0.40);
   const cssBudget = Math.round(maxKb * 0.12);
   const fontBudget = Math.round(maxKb * 0.13);
 
-  // Annual emissions at target vs standard 0.50g average
   const annualTargetKg = Number(((targetGrams * monthlyVisits * 12) / 1000).toFixed(1));
   const annualAvgKg = Number(((0.500 * monthlyVisits * 12) / 1000).toFixed(1));
   const annualSavedKg = Number(Math.max(0, annualAvgKg - annualTargetKg).toFixed(1));
@@ -43,10 +38,10 @@ export default function CarbonBudgetCalculator() {
         <div>
           <h3 className="text-lg font-bold text-white flex items-center gap-2">
             <Calculator className="w-5 h-5 text-emerald-400" />
-            Website Carbon & Page Weight Budget Planner
+            {t('optimizer.budgetTitle', 'Website Carbon & Page Weight Budget Planner')}
           </h3>
           <p className="text-xs text-slate-400 mt-0.5">
-            Set your target sustainability grade and get strict data weight limits for your development team
+            {t('optimizer.budgetSubtitle', 'Set your target sustainability grade and get strict data weight limits for your development team')}
           </p>
         </div>
       </div>
@@ -56,32 +51,39 @@ export default function CarbonBudgetCalculator() {
         {/* Target Grade */}
         <div className="p-4 rounded-2xl bg-slate-900/60 border border-emerald-950 space-y-2">
           <label className="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
-            <Target className="w-3.5 h-3.5 text-emerald-400" /> Target Sustainability Grade
+            <Target className="w-3.5 h-3.5 text-emerald-400" /> {t('optimizer.targetGrade', 'Target Sustainability Grade')}
           </label>
-          <select
-            value={targetGrade}
-            onChange={(e) => setTargetGrade(e.target.value)}
-            className="w-full bg-[#070d0a] border border-emerald-900/60 rounded-xl px-3 py-2 text-xs text-white focus:outline-none"
-          >
+          <div className="grid grid-cols-4 gap-1.5 pt-1">
             {Object.keys(GRADE_TARGETS).map((g) => (
-              <option key={g} value={g}>
-                {GRADE_TARGETS[g].label} (≤ {GRADE_TARGETS[g].grams}g)
-              </option>
+              <button
+                key={g}
+                type="button"
+                onClick={() => setTargetGrade(g)}
+                className={`py-2 rounded-xl text-xs font-black transition-all ${
+                  targetGrade === g
+                    ? 'bg-emerald-500 text-black shadow-md shadow-emerald-500/20'
+                    : 'bg-slate-900/80 text-slate-400 hover:text-white border border-slate-800'
+                }`}
+              >
+                {g}
+              </button>
             ))}
-          </select>
+          </div>
         </div>
 
-        {/* Green Hosting Switch */}
+        {/* Hosting Type */}
         <div className="p-4 rounded-2xl bg-slate-900/60 border border-emerald-950 space-y-2">
           <label className="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
-            <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" /> Server Hosting Energy
+            <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" /> {t('optimizer.hostingSource', 'Hosting Energy Source')}
           </label>
-          <div className="flex gap-2">
+          <div className="grid grid-cols-2 gap-1.5 pt-1">
             <button
               type="button"
               onClick={() => setIsGreenHost(true)}
-              className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all ${
-                isGreenHost ? 'bg-emerald-500 text-black shadow-md' : 'bg-[#070d0a] text-slate-400 border border-slate-800'
+              className={`py-2 px-2 rounded-xl text-xs font-bold transition-all text-center ${
+                isGreenHost
+                  ? 'bg-emerald-500 text-black'
+                  : 'bg-slate-900/80 text-slate-400 hover:text-white border border-slate-800'
               }`}
             >
               🌿 100% Green
@@ -89,8 +91,10 @@ export default function CarbonBudgetCalculator() {
             <button
               type="button"
               onClick={() => setIsGreenHost(false)}
-              className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all ${
-                !isGreenHost ? 'bg-amber-500 text-black shadow-md' : 'bg-[#070d0a] text-slate-400 border border-slate-800'
+              className={`py-2 px-2 rounded-xl text-xs font-bold transition-all text-center ${
+                !isGreenHost
+                  ? 'bg-amber-500 text-black'
+                  : 'bg-slate-900/80 text-slate-400 hover:text-white border border-slate-800'
               }`}
             >
               ⚡ Standard Grid
@@ -100,14 +104,14 @@ export default function CarbonBudgetCalculator() {
 
         {/* Monthly Traffic */}
         <div className="p-4 rounded-2xl bg-slate-900/60 border border-emerald-950 space-y-2">
-          <label className="text-xs font-semibold text-slate-300 flex items-center justify-between">
-            <span>Projected Monthly Visits</span>
+          <div className="flex justify-between text-xs">
+            <span className="text-slate-300 font-semibold">{t('optimizer.monthlyVisits', 'Monthly Visits')}</span>
             <span className="font-mono text-emerald-400 font-bold">{monthlyVisits.toLocaleString()}</span>
-          </label>
+          </div>
           <input
             type="range"
             min="1000"
-            max="200000"
+            max="250000"
             step="5000"
             value={monthlyVisits}
             onChange={(e) => setMonthlyVisits(Number(e.target.value))}
@@ -116,61 +120,59 @@ export default function CarbonBudgetCalculator() {
         </div>
       </div>
 
-      {/* Target Result Box */}
-      <div className="p-6 rounded-3xl bg-gradient-to-r from-emerald-950/40 via-green-950/20 to-teal-950/40 border border-emerald-500/30 flex flex-col md:flex-row items-center justify-between gap-6">
-        <div className="space-y-1 text-center md:text-left">
-          <span className="text-[11px] uppercase tracking-wider font-bold text-emerald-400">
-            Maximum Permitted Page Weight Budget
+      {/* Target Result Stats Banner */}
+      <div className="p-5 rounded-2xl bg-[#070d0a] border border-emerald-500/40 grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <span className="text-xs text-slate-400 uppercase tracking-wider font-semibold">
+            {t('optimizer.maxPayload', 'Maximum Allowed Total Page Weight')}
           </span>
-          <div className="text-3xl sm:text-4xl font-extrabold text-white font-mono">
-            {maxKb.toLocaleString()} KB <span className="text-sm font-normal text-slate-400">({maxMb} MB)</span>
+          <div className="text-3xl font-extrabold text-emerald-400 font-mono mt-1">
+            {maxKb > 1024 ? `${maxMb} MB` : `${maxKb} KB`}
           </div>
-          <p className="text-xs text-slate-300">
-            To achieve <strong className="text-emerald-400">{GRADE_TARGETS[targetGrade].label}</strong>, the total downloaded assets must stay below this ceiling.
+          <p className="text-xs text-slate-400 mt-1">
+            {t('optimizer.co2Cap', 'Carbon emission cap:')} <strong className="text-white">{targetGrams}g CO2e / visit</strong>
           </p>
         </div>
 
-        <div className="p-4 rounded-2xl bg-slate-900/80 border border-emerald-900/50 text-xs space-y-1.5 flex-shrink-0 text-center md:text-right">
-          <div className="text-slate-400 flex items-center justify-center md:justify-end gap-1">
-            <TrendingDown className="w-3.5 h-3.5 text-emerald-400" /> Annual CO2 Savings vs Average:
+        <div className="border-t sm:border-t-0 sm:border-l border-emerald-950/80 sm:pl-4">
+          <span className="text-xs text-slate-400 uppercase tracking-wider font-semibold">
+            {t('optimizer.annualSavings', 'Annual Carbon Saved vs Average Web')}
+          </span>
+          <div className="text-3xl font-extrabold text-teal-300 font-mono mt-1 flex items-center gap-2">
+            <TrendingDown className="w-6 h-6 text-teal-400" />
+            <span>{annualSavedKg.toLocaleString()} kg CO2</span>
           </div>
-          <div className="text-xl font-bold font-mono text-emerald-400">
-            {annualSavedKg.toLocaleString()} kg CO2e / year
-          </div>
-          <div className="text-[10px] text-slate-500">
-            Equivalent to planting ~{Math.round(annualSavedKg / 21.7)} mature trees
-          </div>
+          <p className="text-xs text-slate-400 mt-1">
+            {t('optimizer.targetEmissions', 'Target annual output:')} {annualTargetKg} kg
+          </p>
         </div>
       </div>
 
-      {/* Breakdown Allocations Grid */}
+      {/* Recommended Asset Weight Budget Allocations */}
       <div className="space-y-3">
-        <h4 className="text-xs font-bold text-slate-300 uppercase tracking-wider">
-          Recommended Asset Category Caps
+        <h4 className="text-xs font-bold text-white uppercase tracking-wider">
+          {t('optimizer.breakdownAllocation', 'Recommended Budget Allocation by Asset Type')}
         </h4>
+
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          <div className="p-4 rounded-2xl bg-[#070d0a] border border-emerald-950">
-            <div className="text-[11px] text-slate-400">JavaScript Bundle</div>
-            <div className="text-base font-bold text-yellow-400 font-mono mt-1">≤ {jsBudget} KB</div>
-            <div className="text-[10px] text-slate-500 mt-0.5">35% Budget Cap</div>
+          <div className="p-3.5 rounded-xl bg-slate-900/60 border border-yellow-500/30">
+            <div className="text-xs text-yellow-400 font-semibold">JavaScript (35%)</div>
+            <div className="text-lg font-bold text-white font-mono mt-1">≤ {jsBudget} KB</div>
           </div>
 
-          <div className="p-4 rounded-2xl bg-[#070d0a] border border-emerald-950">
-            <div className="text-[11px] text-slate-400">Images & Media</div>
-            <div className="text-base font-bold text-emerald-400 font-mono mt-1">≤ {imgBudget} KB</div>
-            <div className="text-[10px] text-slate-500 mt-0.5">40% Budget Cap</div>
+          <div className="p-3.5 rounded-xl bg-slate-900/60 border border-green-500/30">
+            <div className="text-xs text-green-400 font-semibold">Images & Media (40%)</div>
+            <div className="text-lg font-bold text-white font-mono mt-1">≤ {imgBudget} KB</div>
           </div>
 
-          <div className="p-4 rounded-2xl bg-[#070d0a] border border-emerald-950">
-            <div className="text-[11px] text-slate-400">CSS Stylesheets</div>
-            <div className="text-base font-bold text-cyan-400 font-mono mt-1">≤ {cssBudget} KB</div>
-            <div className="text-[10px] text-slate-500 mt-0.5">12% Budget Cap</div>
+          <div className="p-3.5 rounded-xl bg-slate-900/60 border border-cyan-500/30">
+            <div className="text-xs text-cyan-400 font-semibold">CSS Styles (12%)</div>
+            <div className="text-lg font-bold text-white font-mono mt-1">≤ {cssBudget} KB</div>
           </div>
 
-          <div className="p-4 rounded-2xl bg-[#070d0a] border border-emerald-950">
-            <div className="text-[11px] text-slate-400">Web Fonts</div>
-            <div className="text-base font-bold text-purple-400 font-mono mt-1">≤ {fontBudget} KB</div>
-            <div className="text-[10px] text-slate-500 mt-0.5">13% Budget Cap</div>
+          <div className="p-3.5 rounded-xl bg-slate-900/60 border border-purple-500/30">
+            <div className="text-xs text-purple-400 font-semibold">Web Fonts (13%)</div>
+            <div className="text-lg font-bold text-white font-mono mt-1">≤ {fontBudget} KB</div>
           </div>
         </div>
       </div>
