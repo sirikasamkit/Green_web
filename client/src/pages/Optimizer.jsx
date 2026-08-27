@@ -83,15 +83,15 @@ export default function Optimizer() {
         <div className="relative z-10 space-y-3 max-w-3xl">
           <div className="inline-flex items-center space-x-2 px-3.5 py-1.5 rounded-full bg-emerald-950/80 border border-emerald-500/30 text-xs font-semibold text-emerald-300">
             <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
-            <span>Web Carbon Reduction & Optimization Studio</span>
+            <span>{t('optimizer.badge', 'Web Carbon Reduction & Optimization Studio')}</span>
           </div>
 
           <h1 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
-            Practical Tools to <span className="eco-gradient-text">Cut Web Carbon Emissions</span>
+            {t('optimizer.title', 'Practical Tools to Cut Web Carbon Emissions')}
           </h1>
 
           <p className="text-xs sm:text-sm text-slate-300 leading-relaxed font-normal">
-            Take direct action to decarbonize your digital products. Compress media to next-gen formats, generate production-ready server caching configs, set strict page weight budgets, and discover verified green web hosting providers.
+            {t('optimizer.subtitle', 'Take direct action to decarbonize your digital products. Compress media to next-gen formats, generate production-ready server caching configs, set strict page weight budgets, and discover verified green web hosting providers.')}
           </p>
         </div>
       </div>
@@ -107,7 +107,7 @@ export default function Optimizer() {
           }`}
         >
           <Calculator className="w-4 h-4" />
-          <span>Carbon Budget Planner</span>
+          <span>{t('optimizer.tabBudget', 'Carbon Budget Planner')}</span>
         </button>
 
         <button
@@ -119,7 +119,7 @@ export default function Optimizer() {
           }`}
         >
           <ImageIcon className="w-4 h-4" />
-          <span>Image WebP Compressor</span>
+          <span>{t('optimizer.tabImage', 'Image WebP Compressor')}</span>
         </button>
 
         <button
@@ -131,7 +131,7 @@ export default function Optimizer() {
           }`}
         >
           <Terminal className="w-4 h-4" />
-          <span>Eco Config Generator</span>
+          <span>{t('optimizer.tabConfig', 'Eco Config Generator')}</span>
         </button>
 
         <button
@@ -143,7 +143,7 @@ export default function Optimizer() {
           }`}
         >
           <ShieldCheck className="w-4 h-4" />
-          <span>Green Hosting Directory</span>
+          <span>{t('optimizer.tabHosting', 'Green Hosting Directory')}</span>
         </button>
       </div>
 
@@ -158,10 +158,10 @@ export default function Optimizer() {
               <div>
                 <h3 className="text-lg font-bold text-white flex items-center gap-2">
                   <ShieldCheck className="w-5 h-5 text-emerald-400" />
-                  Certified 100% Green Renewable Hosting Providers
+                  {t('optimizer.hostingTitle', 'Certified 100% Green Renewable Hosting Providers')}
                 </h3>
                 <p className="text-xs text-slate-400 mt-0.5">
-                  Migrating your infrastructure to zero-carbon energy immediately slashes your website emissions by 9% to 15%
+                  {t('optimizer.hostingSubtitle', 'Migrating your infrastructure to zero-carbon energy immediately slashes your website emissions by 9% to 15%')}
                 </p>
               </div>
             </div>
@@ -197,7 +197,7 @@ export default function Optimizer() {
                     rel="noreferrer"
                     className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-400 hover:text-emerald-300 transition-colors pt-2"
                   >
-                    <span>View Sustainability Commitment</span>
+                    <span>{t('optimizer.viewCommitment', 'View Sustainability Commitment')}</span>
                     <ExternalLink className="w-3.5 h-3.5" />
                   </a>
                 </div>
@@ -213,15 +213,15 @@ export default function Optimizer() {
           <div>
             <h3 className="text-lg font-bold text-white flex items-center gap-2">
               <CheckCircle className="w-5 h-5 text-emerald-400" />
-              Website Decarbonization Action Checklist
+              {t('optimizer.checklistTitle', 'Website Decarbonization Action Checklist')}
             </h3>
             <p className="text-xs text-slate-400 mt-0.5">
-              Check off items as your engineering team applies them to achieve Grade A+ rating
+              {t('optimizer.checklistSubtitle', 'Check off items as your engineering team applies them to achieve Grade A+ rating')}
             </p>
           </div>
 
           <div className="flex items-center space-x-3 bg-slate-900/80 px-4 py-2 rounded-2xl border border-emerald-900/50">
-            <span className="text-xs text-slate-400">Score:</span>
+            <span className="text-xs text-slate-400">{t('optimizer.completedTasks', 'Score:')}</span>
             <span className="text-sm font-mono font-bold text-emerald-400">{progressPercent}% Completed</span>
           </div>
         </div>
