@@ -5,6 +5,36 @@ const { calculateCarbonMetrics } = require('../services/carbonEngine');
 const { generateAuditRecommendations } = require('../services/auditRules');
 const { dbAsync } = require('../models/db');
 
+const KEYWORD_ALIASES = {
+  'gemini': 'https://gemini.google.com',
+  'chatgpt': 'https://chatgpt.com',
+  'openai': 'https://openai.com',
+  'claude': 'https://claude.ai',
+  'copilot': 'https://copilot.microsoft.com',
+  'bing': 'https://www.bing.com',
+  'youtube': 'https://www.youtube.com',
+  'roblox': 'https://www.roblox.com',
+  'google': 'https://www.google.com',
+  'apple': 'https://www.apple.com',
+  'wikipedia': 'https://en.wikipedia.org',
+  'github': 'https://github.com',
+  'facebook': 'https://www.facebook.com',
+  'instagram': 'https://www.instagram.com',
+  'twitter': 'https://x.com',
+  'x': 'https://x.com',
+  'netflix': 'https://www.netflix.com',
+  'spotify': 'https://open.spotify.com',
+  'tiktok': 'https://www.tiktok.com',
+  'canva': 'https://www.canva.com',
+  'notion': 'https://www.notion.so',
+  'pantip': 'https://pantip.com',
+  'sanook': 'https://www.sanook.com',
+  'shopee': 'https://shopee.co.th',
+  'lazada': 'https://www.lazada.co.th',
+  'ku': 'https://www.ku.ac.th',
+  'chula': 'https://www.chula.ac.th',
+};
+
 /**
  * Handle new website scan
  */
@@ -16,13 +46,15 @@ async function scanUrl(req, res) {
       return res.status(400).json({ error: 'Please enter a valid website URL.' });
     }
 
-    let cleanUrl = url.trim();
+    let cleanUrl = url.trim().toLowerCase();
 
-    // Auto-complete casual names (e.g. "youtube", "roblox", "apple")
-    if (!cleanUrl.includes('.') && !cleanUrl.includes('localhost')) {
-      cleanUrl = `https://www.${cleanUrl.toLowerCase()}.com`;
-    } else if (cleanUrl.toLowerCase().startsWith('www.') && cleanUrl.split('.').length === 2) {
-      cleanUrl = `https://${cleanUrl.toLowerCase()}.com`;
+    // 1. Check known brand keywords
+    if (KEYWORD_ALIASES[cleanUrl]) {
+      cleanUrl = KEYWORD_ALIASES[cleanUrl];
+    } else if (!cleanUrl.includes('.') && !cleanUrl.includes('localhost')) {
+      cleanUrl = `https://www.${cleanUrl}.com`;
+    } else if (cleanUrl.startsWith('www.') && cleanUrl.split('.').length === 2) {
+      cleanUrl = `https://${cleanUrl}.com`;
     } else if (!/^https?:\/\//i.test(cleanUrl)) {
       cleanUrl = `https://${cleanUrl}`;
     }

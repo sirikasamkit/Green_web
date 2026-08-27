@@ -10,6 +10,36 @@ const PRESETS = [
   { name: 'GitHub', url: 'https://github.com', tag: 'Developer' },
 ];
 
+const KEYWORD_ALIASES = {
+  'gemini': 'https://gemini.google.com',
+  'chatgpt': 'https://chatgpt.com',
+  'openai': 'https://openai.com',
+  'claude': 'https://claude.ai',
+  'copilot': 'https://copilot.microsoft.com',
+  'bing': 'https://www.bing.com',
+  'youtube': 'https://www.youtube.com',
+  'roblox': 'https://www.roblox.com',
+  'google': 'https://www.google.com',
+  'apple': 'https://www.apple.com',
+  'wikipedia': 'https://en.wikipedia.org',
+  'github': 'https://github.com',
+  'facebook': 'https://www.facebook.com',
+  'instagram': 'https://www.instagram.com',
+  'twitter': 'https://x.com',
+  'x': 'https://x.com',
+  'netflix': 'https://www.netflix.com',
+  'spotify': 'https://open.spotify.com',
+  'tiktok': 'https://www.tiktok.com',
+  'canva': 'https://www.canva.com',
+  'notion': 'https://www.notion.so',
+  'pantip': 'https://pantip.com',
+  'sanook': 'https://www.sanook.com',
+  'shopee': 'https://shopee.co.th',
+  'lazada': 'https://www.lazada.co.th',
+  'ku': 'https://www.ku.ac.th',
+  'chula': 'https://www.chula.ac.th',
+};
+
 export default function SearchBar({ onScan, isLoading, initialUrl = '' }) {
   const { t } = useLanguage();
   const [url, setUrl] = useState(initialUrl);
@@ -40,20 +70,25 @@ export default function SearchBar({ onScan, isLoading, initialUrl = '' }) {
   }, [isLoading, steps.length]);
 
   const normalizeUrlInput = (input) => {
-    let raw = (input || '').trim();
+    let raw = (input || '').trim().toLowerCase();
     if (!raw) return '';
 
-    // If user entered casual name without dot (e.g. "youtube", "roblox", "apple")
+    // 1. Check known brand keywords (e.g. "gemini" -> "gemini.google.com")
+    if (KEYWORD_ALIASES[raw]) {
+      return KEYWORD_ALIASES[raw];
+    }
+
+    // 2. If user entered casual name without dot (e.g. "mybrand")
     if (!raw.includes('.') && !raw.includes('localhost')) {
-      return `https://www.${raw.toLowerCase()}.com`;
+      return `https://www.${raw}.com`;
     }
 
-    // If user entered "www.name" without extension
-    if (raw.toLowerCase().startsWith('www.') && raw.split('.').length === 2) {
-      return `https://${raw.toLowerCase()}.com`;
+    // 3. If user entered "www.name" without extension
+    if (raw.startsWith('www.') && raw.split('.').length === 2) {
+      return `https://${raw}.com`;
     }
 
-    // If missing protocol, prepend https://
+    // 4. If missing protocol, prepend https://
     if (!/^https?:\/\//i.test(raw)) {
       raw = `https://${raw}`;
     }
